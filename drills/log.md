@@ -10,6 +10,7 @@ One line per attempt. Newest at the bottom.
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-06 | 1 | Date dimension | 10 | | | | | |
 
+
 ## Weekly summary (fill on Sunday)
 
 | Week of | Drills done | Passed | Avg time vs limit | Weakest pattern | Focus next week |
