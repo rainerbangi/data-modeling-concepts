@@ -31,14 +31,72 @@ as t(item_id, category);
 
 -- COMMAND ----------
 
+SELECT * FROM d04_dim_item;
+
+-- COMMAND ----------
+
+SELECT * FROM d04_dump_0302;
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## My answer
 -- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.
 
 -- COMMAND ----------
 
--- Drill 4 answer
+-- DBTITLE 1,Drill 4 answer: SCD2 full-dump apply
+MERGE INTO d04_dim_item d
+USING d04_dump_0302 s
+  ON d.item_id = s.item_id
+ AND d.is_current = true                              -- compare only against today's version
+WHEN MATCHED AND d.category IS DISTINCT FROM s.category THEN
+  UPDATE SET valid_to   = DATE'2026-03-02',
+             is_current = false;
 
+-- COMMAND ----------
+
+SELECT * FROM d04_dim_item;
+
+-- COMMAND ----------
+
+SELECT * FROM d04_dim_item;
+
+-- COMMAND ----------
+
+INSERT INTO d04_dim_item (item_key, item_id, category, valid_from, valid_to, is_current)
+SELECT xxhash64(s.item_id, DATE'2026-03-02'),
+       s.item_id,
+       s.category,
+       DATE'2026-03-02',
+       DATE'9999-12-31',
+       true
+FROM d04_dump_0302 s
+LEFT JOIN d04_dim_item d
+  ON d.item_id = s.item_id
+ AND d.is_current = true
+WHERE d.item_id IS NULL; 
+
+-- COMMAND ----------
+
+SELECT * FROM d04_dim_item;
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Checks
+-- Checks: expect STRAW 2 rows / 1 current, BLUE 1 / 1, KIWI 1 / 1; exactly 3 current total
+select
+  item_id,
+  count(*) as rows_total,
+  count_if(is_current) as rows_current
+from d04_dim_item
+group by item_id
+order by item_id;
+
+select * from d04_dim_item order by item_id, valid_from;
+-- STRAW old: 2026-03-01 -> 2026-03-02 (closed, not current)
+-- STRAW new: 2026-03-02 -> 9999-12-31 (current)
+-- Sandwich join still works: valid_from <= d and d < valid_to
 
 -- COMMAND ----------
 
