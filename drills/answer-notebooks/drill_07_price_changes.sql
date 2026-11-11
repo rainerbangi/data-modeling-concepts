@@ -33,11 +33,6 @@ as t(item_id, price, effective_date);
 
 -- COMMAND ----------
 
--- Drill 7 answer
-
-
--- COMMAND ----------
-
 -- MAGIC %md
 -- MAGIC ## Review
 -- MAGIC - **Time:** __ min (limit in the title)
@@ -47,3 +42,22 @@ as t(item_id, price, effective_date);
 -- MAGIC - **Genie Code feedback:** (ask: "Review my answer to drill 7 using my coach rules. Do not rewrite it.")
 -- MAGIC
 -- MAGIC Then check `answer_key.md` and add one line to `log.md`.
+
+-- COMMAND ----------
+
+CREATE OR REPLACE TABLE d07_price_scd2 AS
+WITH with_prev AS (
+  SELECT *,
+         LAG(price) OVER (PARTITION BY item_id ORDER BY effective_date) AS prev_price
+  FROM d07_price_changes
+),
+real_changes AS (
+  SELECT item_id, price, effective_date
+  FROM with_prev
+  WHERE prev_price IS DISTINCT FROM price   -- drop repeats; the first row (prev = NULL) is kept
+)
+SELECT item_id, price,
+       effective_date AS valid_from,
+       LEAD(effective_date, 1, DATE '9999-12-31')
+         OVER (PARTITION BY item_id ORDER BY effective_date) AS valid_to
+FROM real_changes;

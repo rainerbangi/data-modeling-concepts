@@ -28,14 +28,37 @@ as t(po_id, ordered_date, received_date, units);
 
 -- COMMAND ----------
 
+SELECT * FROM d01_dim_date;
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## My answer
 -- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.
 
 -- COMMAND ----------
 
--- Drill 5 answer
+SELECT
+  od.week_start  AS ordered_week,
+  rd.week_start  AS received_week,
+  (f.units)   AS units
+FROM d05_deliveries f
+LEFT JOIN d01_dim_date od ON f.ordered_date =  od.calendar_date   -- role 1: order date
+LEFT JOIN d01_dim_date rd ON f.received_date = rd.calendar_date  -- role 2: received date
+--GROUP BY od.week_start, rd.week_start
+ORDER BY ordered_week, received_week;
 
+-- COMMAND ----------
+
+SELECT
+  od.week_start  AS ordered_week,
+  rd.week_start  AS received_week,
+  SUM(f.units)   AS units
+FROM d05_deliveries f
+LEFT JOIN d01_dim_date od ON f.ordered_date =  od.calendar_date   -- role 1: order date
+LEFT JOIN d01_dim_date rd ON f.received_date = rd.calendar_date  -- role 2: received date
+GROUP BY od.week_start, rd.week_start
+ORDER BY ordered_week, received_week;
 
 -- COMMAND ----------
 

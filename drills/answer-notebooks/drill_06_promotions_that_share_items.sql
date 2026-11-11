@@ -40,8 +40,29 @@ as t(sale_date, item_id, units);
 
 -- COMMAND ----------
 
--- Drill 6 answer
+SELECT p.promo_id,
+       SUM(s.units) AS units
+FROM d06_sales s
+JOIN d06_promo_items pi                                   -- ① which promos is this item in?
+  ON pi.item_id = s.item_id
+JOIN d06_promos p                                         -- ② was the sale inside that promo's dates?
+  ON p.promo_id = pi.promo_id
+ AND s.sale_date BETWEEN p.start_date AND p.end_date      --    BETWEEN includes both ends
+GROUP BY p.promo_id;                                      -- ③ add up each promo's stamps
 
+
+-- COMMAND ----------
+
+SELECT SUM(s.units) AS units_on_any_promo
+FROM d06_sales s
+WHERE EXISTS (                                            -- "does at least one promo cover this sale?"
+  SELECT 1
+  FROM d06_promo_items pi
+  JOIN d06_promos p
+    ON p.promo_id = pi.promo_id
+  WHERE pi.item_id = s.item_id                            -- same item…
+    AND s.sale_date BETWEEN p.start_date AND p.end_date   -- …and inside the promo's dates
+);
 
 -- COMMAND ----------
 

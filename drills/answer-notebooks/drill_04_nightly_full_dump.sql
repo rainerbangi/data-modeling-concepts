@@ -100,6 +100,25 @@ select * from d04_dim_item order by item_id, valid_from;
 
 -- COMMAND ----------
 
+SELECT item_id, count(*) AS versions, count_if(is_current) AS current_rows
+FROM d04_dim_item
+GROUP BY item_id;
+
+-- COMMAND ----------
+
+SELECT 
+named_struct('city','NYC'),
+EXPLODE(array('A','B', NULL));
+
+-- COMMAND ----------
+
+SELECT inline (array(
+  named_struct('plan_code', 'HMO-BASE', 'pay_factor', 0.80),
+  named_struct('plan_code', 'PPO-PLUS', 'pay_factor', 0.65)
+));
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## Review
 -- MAGIC - **Time:** __ min (limit in the title)
