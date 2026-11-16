@@ -48,7 +48,7 @@ JOIN d06_promo_items pi                                   -- ① which promos is
 JOIN d06_promos p                                         -- ② was the sale inside that promo's dates?
   ON p.promo_id = pi.promo_id
  AND s.sale_date BETWEEN p.start_date AND p.end_date      --    BETWEEN includes both ends
-GROUP BY p.promo_id;                                      -- ③ add up each promo's stamps
+GROUP BY p.promo_id;                                    -- ③ add up each promo's stamps
 
 
 -- COMMAND ----------
@@ -75,3 +75,152 @@ WHERE EXISTS (                                            -- "does at least one 
 -- MAGIC - **Genie Code feedback:** (ask: "Review my answer to drill 6 using my coach rules. Do not rewrite it.")
 -- MAGIC
 -- MAGIC Then check `answer_key.md` and add one line to `log.md`.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **_SCRATCH WORK_**
+-- MAGIC
+-- MAGIC
+-- MAGIC Task: (a) Units sold under each promo. (b) Total units sold while the item was on any promo.
+
+-- COMMAND ----------
+
+SELECT COUNT(*), SUM(s.units) FROM
+d06_promo_items pi JOIN d06_sales s
+ON pi.item_id = s.item_id;
+
+SELECT * FROM
+d06_promo_items pi JOIN d06_sales s
+ON pi.item_id = s.item_id
+JOIN d06_promos p ON (p.promo_id = pi.promo_id
+AND s.sale_date BETWEEN p.start_date AND p.end_date);
+
+
+SELECT 
+    p.promo_id,
+    SUM(s.units) as units
+FROM
+d06_promo_items pi 
+JOIN d06_sales s ON pi.item_id = s.item_id
+JOIN d06_promos p ON  pi.promo_id = p.promo_id AND s.sale_date BETWEEN p.start_date AND p.end_date
+GROUP BY p.promo_id;
+
+-- COMMAND ----------
+
+select p.promo_id, sum(s.units) as units
+from d06_sales s
+join d06_promo_items pi on pi.item_id = s.item_id              -- step 1
+join d06_promos p on p.promo_id = pi.promo_id
+              and s.sale_date between p.start_date and p.end_date  -- step 2
+group by p.promo_id;   
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Here’s a practice drill in the same style as your others.**
+-- MAGIC
+-- MAGIC Tasks
+-- MAGIC
+-- MAGIC (a) List the students enrolled in at least one STEM course in 2026-FALL.
+-- MAGIC
+-- MAGIC (b) What is the total scholarship money held by those students?
+-- MAGIC
+-- MAGIC (c) List the students who have never taken a STEM course (any term).
+
+-- COMMAND ----------
+
+create or replace table p01_students as
+select * from values
+  ('S1','Ava', 1000), ('S2','Ben', 500), ('S3','Cara', 2000),
+  ('S4','Dev', 750),  ('S5','Eli', 300)
+as t(student_id, name, scholarship);
+
+create or replace table p01_courses as
+select * from values
+  ('C1','Calculus', true), ('C2','Physics', true),
+  ('C3','Poetry',  false), ('C4','History', false)
+as t(course_id, title, is_stem);
+
+create or replace table p01_enrollments as
+select * from values
+  ('S1','C1','2026-FALL'),   ('S1','C2','2026-FALL'),
+  ('S2','C3','2026-FALL'),
+  ('S3','C1','2026-SPRING'), ('S3','C4','2026-FALL'),
+  ('S4','C2','2026-FALL'),   ('S4','C3','2026-FALL')
+as t(student_id, course_id, term);
+
+-- COMMAND ----------
+
+SELECT * FROM p01_students;
+
+
+-- COMMAND ----------
+
+SELECT * FROM p01_courses;
+
+-- COMMAND ----------
+
+SELECT * FROM p01_enrollments;
+
+-- COMMAND ----------
+
+--(a) List the students enrolled in at least one STEM course in 2026-FALL.
+
+ -- p01_courses -- 1 row represents 1 course
+ -- p01_enrollments -- 1 row represents 1 student enrollment
+ -- p01_students -- 1 row represents 1 student
+
+-- JOINING p01_enrollments and p01_courses to determine STEM courses in 2026-FALL
+
+SELECT * FROM p01_students s
+WHERE EXISTS (
+SELECT 1 
+FROM p01_enrollments e
+JOIN p01_courses c ON c.course_id = e.course_id AND e.term = '2026-FALL' AND c.is_stem = true
+WHERE s.student_id = e.student_id)
+
+
+-- COMMAND ----------
+
+--(b) What is the total scholarship money held by those students?
+
+SELECT SUM(scholarship) FROM p01_students s
+WHERE EXISTS (
+SELECT 1 
+FROM p01_enrollments e
+JOIN p01_courses c ON c.course_id = e.course_id AND e.term = '2026-FALL' AND c.is_stem = true
+WHERE s.student_id = e.student_id)
+
+
+-- COMMAND ----------
+
+--(c) List the students who have never taken a STEM course (any term).
+--→ S2 Ben (only Poetry) and S5 Eli (no enrollments at all). NOT EXISTS keeps Eli naturally: no rows found means “none exist,” so the answer is TRUE.
+
+SELECT * FROM p01_students s
+WHERE NOT EXISTS (
+    SELECT *
+FROM p01_enrollments e
+JOIN p01_courses c ON c.course_id = e.course_id AND is_stem = true
+WHERE s.student_id = e.student_id
+)
+
+
+
+-- COMMAND ----------
+
+select sum(s.units)                                    -- add up the units…
+from d06_sales s                                       -- …of the sales…
+where exists (                                         -- …where the clerk says YES to:
+  select 1                                             --   "is there at least one page…
+  from d06_promo_items pi                              --    in the binder (items…
+  join d06_promos p on p.promo_id = pi.promo_id        --    …joined to their promo dates)
+  where pi.item_id = s.item_id                         --    …with MY item…
+    and s.sale_date between p.start_date and p.end_date  --  …that covers MY date?"
+);

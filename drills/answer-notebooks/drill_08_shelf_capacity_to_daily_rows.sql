@@ -57,28 +57,43 @@ ORDER BY store_id, calendar_date;
 
 -- COMMAND ----------
 
+-- Setup
+create or replace table d08_capacity_changes as
+select * from values
+  ('A','STRAW',50,date'2026-01-01', timestamp'2026-01-01 06:00:00'),
+  ('A','STRAW',70,date'2026-03-15', timestamp'2026-03-15 06:00:00'),  -- first load that day
+  ('A','STRAW',80,date'2026-03-15', timestamp'2026-03-15 14:30:00'),  -- correction, same day, loaded later
+  ('B','STRAW',60,date'2026-03-16', timestamp'2026-03-16 06:00:00')
+as t(store_id, item_id, capacity, changed_on, _loaded_at);
+
+-- COMMAND ----------
+
+SELECT * FROM d08_capacity_changes;
+
+-- COMMAND ----------
+
 -- fct_capacity_daily
 -- Grain:   one row per (store_id, item_id, calendar_date)
--- Range:   :start_date to :end_date (passed in by the scheduler, never hardcoded)
+-- Range:   2026-03-13 to 2026-03-17
 -- Missing: store/items with no capacity yet appear with capacity = NULL (full grid)
--- Ties:    two changes on the same day → the latest load wins
+-- Ties:    two changes on the same day → the latest _loaded_at wins
 
-CREATE OR REPLACE TABLE fct_capacity_daily AS
+CREATE OR REPLACE TABLE fct_capacity_daily_08 AS
 
-WITH changes_deduped AS (                -- 1. resolve same-day ties
+WITH changes_deduped AS (
   SELECT store_id, item_id, capacity, changed_on
   FROM (
     SELECT *,
            ROW_NUMBER() OVER (
              PARTITION BY store_id, item_id, changed_on
-             ORDER BY _loaded_at DESC          -- assumes the source has a load timestamp
+             ORDER BY _loaded_at DESC
            ) AS rn
     FROM d08_capacity_changes
   )
   WHERE rn = 1
 ),
 
-capacity_scd2 AS (                       -- 2. change log → date ranges
+capacity_scd2 AS (
   SELECT store_id, item_id, capacity,
          changed_on AS valid_from,
          LEAD(changed_on, 1, DATE '9999-12-31')
@@ -86,18 +101,18 @@ capacity_scd2 AS (                       -- 2. change log → date ranges
   FROM changes_deduped
 ),
 
-date_spine AS (                          -- 3. exactly one row per day
+date_spine AS (
   SELECT DISTINCT calendar_date
   FROM d01_dim_date
-  WHERE calendar_date BETWEEN :start_date AND :end_date
+  WHERE calendar_date BETWEEN DATE '2026-03-13' AND DATE '2026-03-17'
 ),
 
-store_items AS (                         -- 4. every store × item we report on
-  SELECT DISTINCT store_id, item_id      --    (in real life: from a store/item dim or assortment table)
+store_items AS (
+  SELECT DISTINCT store_id, item_id
   FROM changes_deduped
 )
 
-SELECT                                   -- 5. the grid, with capacity filled in where known
+SELECT
   si.store_id,
   si.item_id,
   d.calendar_date,
@@ -105,9 +120,10 @@ SELECT                                   -- 5. the grid, with capacity filled in
 FROM date_spine d
 CROSS JOIN store_items si
 LEFT JOIN capacity_scd2 c
-  ON  c.store_id = si.store_id
+  ON 
+ c.store_id = si.store_id
   AND c.item_id  = si.item_id
-  AND d.calendar_date >= c.valid_from
+ AND  d.calendar_date >= c.valid_from
   AND d.calendar_date <  c.valid_to;
 
 -- COMMAND ----------

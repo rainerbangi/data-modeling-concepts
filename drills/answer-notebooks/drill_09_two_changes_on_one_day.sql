@@ -34,7 +34,41 @@ as t(store_id, item_id, capacity, change_ts);
 
 -- COMMAND ----------
 
--- Drill 9 answer
+with last_change_per_day as (                         -- step 1: one value per day
+  select store_id, item_id, capacity, change_day
+  from (
+    select store_id, item_id, capacity,
+           date(change_ts) as change_day,
+           row_number() over (
+             partition by store_id, item_id, date(change_ts)
+             order by change_ts desc,                 -- latest change wins…
+                      capacity desc                   -- …edge case 1: a fixed tie-breaker
+           ) as rn
+    from d09_capacity_changes
+  ) t
+  where rn = 1
+),
+real_changes as (                                     -- step 2: edge case 2, drop no-change days
+  select store_id, item_id, capacity, change_day
+  from (
+    select *,
+           lag(capacity) over (partition by store_id, item_id order by change_day) as prev_capacity
+    from last_change_per_day
+  ) t
+  where capacity is distinct from prev_capacity       -- the first row (prev = NULL) is kept
+)
+select                                                -- step 3: build the versions
+  xxhash64(store_id, item_id, change_day) as capacity_version_key,
+  store_id, item_id, capacity,
+  change_day as valid_from,
+  lead(change_day, 1, date '9999-12-31')
+    over (partition by store_id, item_id order by change_day) as valid_to,
+  lead(change_day)
+    over (partition by store_id, item_id order by change_day) is null as is_current
+from real_changes;
+
+-- COMMAND ----------
+
 
 
 -- COMMAND ----------
