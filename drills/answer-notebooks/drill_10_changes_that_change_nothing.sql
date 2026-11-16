@@ -36,6 +36,32 @@ as t(item_id, capacity, changed_on);
 -- COMMAND ----------
 
 -- Drill 10 answer
+SELECT * FROM d10_capacity_changes;
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Cell 7
+with deduped as (SELECT 
+    item_id,
+    capacity,
+    changed_on
+FROM
+(SELECT
+    *,
+    LAG(capacity) OVER (PARTITION BY item_id ORDER BY changed_on) as prev_capacity
+FROM d10_capacity_changes) t
+WHERE prev_capacity IS DISTINCT FROM capacity),
+scd2 as (
+SELECT 
+    item_id,
+    capacity,
+    changed_on as valid_from,
+    LEAD (changed_on, 1 , date '9999-12-31') OVER (PARTITION BY item_id ORDER BY changed_on) as valid_to,
+    CASE WHEN LEAD (changed_on) OVER (PARTITION BY item_id ORDER BY changed_on) is null then true else false end as active
+ FROM deduped)
+ SELECT * FROM scd2
+where date '2026-03-15'>= valid_from 
+and date '2026-03-15'< valid_to;
 
 
 -- COMMAND ----------
