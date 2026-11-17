@@ -25,6 +25,7 @@ select * from values
   ('STRAW','discontinue',cast(null as int),date'2026-04-01')
 as t(item_id, action, capacity, effective_date);
 
+
 -- COMMAND ----------
 
 -- MAGIC %md
@@ -34,6 +35,18 @@ as t(item_id, action, capacity, effective_date);
 -- COMMAND ----------
 
 -- Drill 13 answer
+with timeline as (
+  select item_id, action, capacity,
+         effective_date as valid_from,
+         lead(effective_date, 1, date '9999-12-31')
+           over (partition by item_id order by effective_date) as valid_to
+  from d13_capacity_events
+)
+select item_id, capacity, valid_from, valid_to,
+       valid_to = date '9999-12-31' as is_current
+from timeline
+where action = 'set'
+order by item_id, valid_from;
 
 
 -- COMMAND ----------

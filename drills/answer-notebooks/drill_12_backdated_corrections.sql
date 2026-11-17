@@ -38,6 +38,41 @@ as t(store_id, item_id, capacity, effective_date, entered_at);
 -- Drill 12 answer
 
 
+SELECT * FROM d12_capacity_changes;
+
+-- COMMAND ----------
+
+with latest_per_day as (
+  select store_id, item_id, capacity, effective_date
+  from d12_capacity_changes
+  qualify row_number() over (
+            partition by store_id, item_id, effective_date
+            order by entered_at desc) = 1
+),
+real_changes as (
+  select *
+  from latest_per_day
+  qualify capacity is distinct from
+          lag(capacity) over (partition by store_id, item_id order by effective_date)
+),
+scd2 as (
+  select store_id, item_id, capacity,
+         effective_date as valid_from,
+         lead(effective_date, 1, date '9999-12-31')
+           over (partition by store_id, item_id order by effective_date) as valid_to
+  from real_changes
+)
+select * from scd2
+where 
+date '2026-03-15' >= valid_from 
+and date '2026-03-15' < valid_to  
+union all
+select * from scd2
+where 
+date '2026-03-16' >= valid_from 
+and date '2026-03-16' < valid_to;
+--What was the capacity on Mar 15? On Mar 16?
+
 -- COMMAND ----------
 
 -- MAGIC %md

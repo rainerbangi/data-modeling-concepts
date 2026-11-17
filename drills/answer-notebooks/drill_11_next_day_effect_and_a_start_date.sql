@@ -41,7 +41,39 @@ as t(store_id, item_id, capacity, start_date, change_timestamp);
 -- COMMAND ----------
 
 -- Drill 11 answer
+with effective as (
+  select store_id, item_id, capacity, change_timestamp,
+         greatest(date_add(date(change_timestamp), 1), start_date) as eff_date
+  from d11_capacity_changes
+),
+last_per_day as (
+  select *
+  from effective
+  qualify row_number() over (
+            partition by store_id, item_id, eff_date
+            order by change_timestamp desc) = 1
+),
+real_changes as (
+  select *
+  from last_per_day
+  qualify capacity is distinct from
+          lag(capacity) over (partition by store_id, item_id order by eff_date)
+)
+select store_id, item_id, capacity,
+       eff_date as valid_from,
+       lead(eff_date, 1, date '9999-12-31')
+         over (partition by store_id, item_id order by eff_date) as valid_to,
+       lead(eff_date) over (partition by store_id, item_id order by eff_date) is null as is_current
+from real_changes
+order by store_id, item_id, valid_from;
 
+-- COMMAND ----------
+
+
+
+-- COMMAND ----------
+
+SELECT greatest(date_add(timestamp '2027-05-24 00:00:00',2),current_date());
 
 -- COMMAND ----------
 
