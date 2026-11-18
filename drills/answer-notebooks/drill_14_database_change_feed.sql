@@ -39,6 +39,38 @@ as t(op, item_id, category, commit_ts);
 
 -- Drill 14 answer
 
+select *,  date_format(commit_ts, 'yyyy-MM-dd HH:mm') from d14_item_cdc
+order by item_id, commit_ts;
+
+
+-- COMMAND ----------
+
+with last_per_day as (
+  select op, item_id, category, date(commit_ts) as change_day
+  from d14_item_cdc
+  qualify row_number() over (
+            partition by item_id, date(commit_ts)
+            order by commit_ts desc) = 1
+),
+real_changes as (
+  select *
+  from last_per_day
+  qualify category is distinct from
+          lag(category) over (partition by item_id order by change_day)
+)
+,
+timeline as (
+  select item_id, op, category,
+         change_day as valid_from,
+         lead(change_day, 1, date '9999-12-31')
+           over (partition by item_id order by change_day) as valid_to
+  from real_changes
+)
+select item_id, category, valid_from, valid_to,
+       valid_to = date '9999-12-31' as is_current
+from timeline
+where op <> 'D'
+order by item_id, valid_from;
 
 -- COMMAND ----------
 

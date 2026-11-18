@@ -38,6 +38,28 @@ as t(sale_id, sold_at, item_id, units, loaded_at);
 
 -- Drill 17 answer
 
+SELECT * FROM d17_sales;
+
+-- COMMAND ----------
+
+DESCRIBE d17_sales;
+
+with cte_dedup as (select
+    sale_id,
+    item_id,
+    sold_at,
+    units,
+    loaded_at
+from d17_sales
+qualify row_number() over (partition by sale_id order by loaded_at desc))
+select 
+    item_id,
+    date(sold_at) as sale_date,
+    sum(units) as daily_units
+from cte_dedup
+group by all
+order by sale_date desc ;
+
 
 -- COMMAND ----------
 

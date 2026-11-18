@@ -43,11 +43,10 @@ with timeline as (
   from d13_capacity_events
 )
 select item_id, capacity, valid_from, valid_to,
-       valid_to = date '9999-12-31' as is_current
+       valid_to = date '9999-12-31' as is_current, null is distinct from null as test_scalar_op, 'r'='r' as test_scalar_op2
 from timeline
 where action = 'set'
 order by item_id, valid_from;
-
 
 -- COMMAND ----------
 

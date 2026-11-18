@@ -34,7 +34,44 @@ as t(sale_id, item_id, sold_on, units);
 -- COMMAND ----------
 
 -- Drill 16 answer
+SELECT * FROM d07_price_scd2;
 
+
+-- COMMAND ----------
+
+select f.sale_id, f.item_id, f.sold_on, f.units,
+       d.price,
+       f.units * d.price as revenue,
+       d.price is null   as missing_price
+from d16_sales f
+left join d07_price_scd2 d
+  on  f.item_id = d.item_id
+  and f.sold_on >= d.valid_from
+  and f.sold_on <  d.valid_to
+order by f.sale_id desc;
+
+-- COMMAND ----------
+
+select * from d16_sales;
+
+-- COMMAND ----------
+
+-- DBTITLE 1,Solution
+-- Solution
+select
+  f.sale_id,
+  f.item_id,
+  f.sold_on,
+  f.units,
+  d.price,
+  coalesce(f.units * d.price, 0) as revenue,
+  case when d.price is null then 'NO PRICE' else 'OK' end as price_status
+from d16_sales f
+left join d07_price_scd2 d
+       on f.item_id = d.item_id
+      and f.sold_on >= d.valid_from   -- valid_from inclusive
+      and f.sold_on <  d.valid_to     -- valid_to exclusive
+order by f.sale_id;
 
 -- COMMAND ----------
 
