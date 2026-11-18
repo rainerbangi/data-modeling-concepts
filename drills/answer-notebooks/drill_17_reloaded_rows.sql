@@ -45,13 +45,9 @@ SELECT * FROM d17_sales;
 DESCRIBE d17_sales;
 
 with cte_dedup as (select
-    sale_id,
-    item_id,
-    sold_at,
-    units,
-    loaded_at
+    sale_id, item_id, sold_at, units, loaded_at
 from d17_sales
-qualify row_number() over (partition by sale_id order by loaded_at desc))
+qualify row_number() over (partition by sale_id order by loaded_at desc) = 1 )
 select 
     item_id,
     date(sold_at) as sale_date,
@@ -60,6 +56,20 @@ from cte_dedup
 group by all
 order by sale_date desc ;
 
+-- COMMAND ----------
+
+--Soln ensuring sold_at always in NYC time
+with cte_dedup as (
+  select sale_id, item_id, sold_at, units, loaded_at
+  from d17_sales
+  qualify row_number() over (partition by sale_id order by loaded_at desc) = 1
+)
+select item_id,
+       date(from_utc_timestamp(sold_at, 'America/New_York')) as sale_date,
+       sum(units) as daily_units
+from cte_dedup
+group by all
+order by sale_date desc;
 
 -- COMMAND ----------
 
