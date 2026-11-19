@@ -37,8 +37,41 @@ as t(logged_on, store_id, item_id, units, reason);
 
 -- COMMAND ----------
 
--- Drill 20 answer
+with daily_sales as (
+    select sold_on, store_id, item_id, sum(units) as sold_units
+    from d20_sales group by 1,2,3
+),
+daily_shrink as (
+    select logged_on, store_id, item_id, sum(units) as shrink_units
+    from d20_shrink group by 1,2,3
+)
+select
+coalesce (k.sold_on, s.logged_on) as cal_date,
+coalesce (k.store_id, s.store_id) as store_id,
+coalesce (k.item_id, s.item_id) as item_id,
+coalesce (k.sold_units, 0) as sold_units,
+coalesce (s.shrink_units, 0) as shrink_units
+from
+daily_sales k full outer join daily_shrink s
+on k.sold_on = s.logged_on 
+and k.store_id = s.store_id 
+and k.item_id = s.item_id;
 
+-- COMMAND ----------
+
+-- Drill 20 answer
+select * from d20_sales;
+
+-- COMMAND ----------
+
+select * from d20_shrink;
+
+-- COMMAND ----------
+
+select logged_on, store_id, item_id, reason, count(*)
+from d20_shrink
+group by all
+having count(*) > 1;
 
 -- COMMAND ----------
 

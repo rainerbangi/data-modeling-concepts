@@ -27,6 +27,10 @@ as t(customer_id, sold_on, item_id, units);
 
 -- COMMAND ----------
 
+select * from d22_lines;
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## My answer
 -- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.
@@ -34,6 +38,15 @@ as t(customer_id, sold_on, item_id, units);
 -- COMMAND ----------
 
 -- Drill 22 answer
+select sold_on, sum(units) as units, count(distinct customer_id) as customers
+from d22_lines
+group by sold_on;
+
+select count(distinct customer_id) as customers_week
+from d22_lines
+where sold_on between date'2026-03-09' and date'2026-03-15';
+
+
 
 
 -- COMMAND ----------

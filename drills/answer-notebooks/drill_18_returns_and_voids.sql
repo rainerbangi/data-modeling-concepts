@@ -124,14 +124,14 @@ from practice_students s
 WHERE NOT EXISTS (
 select 1 from practice_enrollments e
 WHERE e.status = 'active'
-and e.student_id =s.student_id );
+and e.student_id =s.student_id);
 
 -- COMMAND ----------
 
 select student_id
 from practice_students s
 where student_id not in (select student_id from practice_enrollments e
-WHERE e.status = 'active' and student_id is not null );
+WHERE e.status = 'active' and student_id is not null);
 
 -- COMMAND ----------
 
