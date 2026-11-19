@@ -29,9 +29,54 @@ as t(po_id, status, status_at);
 
 -- COMMAND ----------
 
+
+with deduped_purchases as (
+    select po_id, status, status_at
+    from d27_po_events
+    where status_at < date'2026-03-11'
+    qualify row_number() over (partition by po_id, status, status_at order by status_at desc) =1 
+ 
+),
+piv as (
+    select
+    po_id,
+    min (case when status = 'ordered' then status_at end) as ordered_at,
+    min (case when status = 'shipped' then status_at end) as shipped_at,   
+    min (case when status = 'received' then status_at end) as received_at
+    from deduped_purchases
+    group by po_id
+)
+select 
+*,
+date_diff(day,ordered_at, received_at) as ordered_to_received,
+case
+ when (received_at is null and date_diff(day,ordered_at,date'2026-03-10')>5 ) then 1 else 0 end as over_due
+from piv;
+
+-- COMMAND ----------
+
+with piv as (
+  select po_id,
+         min(case when status = 'ordered'  then status_at end) as ordered_at,
+         min(case when status = 'shipped'  then status_at end) as shipped_at,
+         min(case when status = 'received' then status_at end) as received_at
+  from d27_po_events
+  group by po_id
+)
+select *,
+       datediff(received_at, ordered_at) as days_to_receive,
+       received_at is null and datediff(date'2026-03-10', ordered_at) > 5 as is_overdue
+from piv;
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## My answer
 -- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.
+
+-- COMMAND ----------
+
+select current_schema();
 
 -- COMMAND ----------
 
