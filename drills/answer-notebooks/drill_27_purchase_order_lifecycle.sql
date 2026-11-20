@@ -70,13 +70,13 @@ from piv;
 
 -- COMMAND ----------
 
--- MAGIC %md
--- MAGIC ## My answer
--- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.
+select * from d27_po_events;
 
 -- COMMAND ----------
 
-select current_schema();
+-- MAGIC %md
+-- MAGIC ## My answer
+-- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.
 
 -- COMMAND ----------
 

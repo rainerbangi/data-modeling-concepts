@@ -25,6 +25,44 @@ as t(store_id, fiscal_period_seq, shrink_amt, sales_amt);    -- 13 periods per y
 
 -- COMMAND ----------
 
+--Task: For period 14: shrink rate, rate last year, change in points, change in percent.
+
+-- COMMAND ----------
+
+describe d31_agg
+
+-- COMMAND ----------
+
+with base_cte as (select
+cy.store_id,
+cy.fiscal_period_seq,
+round(cy.shrink_amt/nullif(cy.sales_amt,0)*100,2) as cy_shrink_rate,
+round(ly.shrink_amt/nullif(ly.sales_amt,0)*100,2) as ly_shrink_rate,
+round(cy.shrink_amt/nullif(cy.sales_amt,0)*100 - ly.shrink_amt/nullif(ly.sales_amt,0)*100,2) as change_points,
+ly.fiscal_period_seq = cy.fiscal_period_seq - 13 as on_check,
+cy.fiscal_period_seq - 13 as ly_seq
+from d31_agg cy
+join d31_agg ly
+on ly.fiscal_period_seq = cy.fiscal_period_seq - 13)
+select *, round((cy_shrink_rate-ly_shrink_rate)/nullif(ly_shrink_rate,0) *100,2) as change_percent
+ from base_cte;
+
+-- COMMAND ----------
+
+select cur.store_id, cur.fiscal_period_seq,
+       round(cur.shrink_amt / nullif(cur.sales_amt, 0) * 100, 2) as rate_pct,
+       round(ly.shrink_amt  / nullif(ly.sales_amt, 0)  * 100, 2) as rate_ly_pct,
+       round((cur.shrink_amt / nullif(cur.sales_amt, 0)
+            - ly.shrink_amt  / nullif(ly.sales_amt, 0)) * 100, 2) as change_pts,
+       round(((cur.shrink_amt / nullif(cur.sales_amt, 0))
+            / nullif(ly.shrink_amt / nullif(ly.sales_amt, 0), 0) - 1) * 100, 1) as change_pct
+from d31_agg cur
+left join d31_agg ly
+  on ly.store_id = cur.store_id and ly.fiscal_period_seq = cur.fiscal_period_seq - 13
+where cur.fiscal_period_seq = 14;
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## My answer
 -- MAGIC Start your timer. Write from a blank cell, no notes. Add more cells if you need them.

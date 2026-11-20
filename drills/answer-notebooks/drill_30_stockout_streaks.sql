@@ -9,6 +9,7 @@
 -- COMMAND ----------
 
 use workspace.drills;
+select current_catalog(), current_schema()
 
 -- COMMAND ----------
 
@@ -22,6 +23,30 @@ use workspace.drills;
 create or replace table d30_on_hand as
 select item_id, date_add(date'2026-03-01', pos) as calendar_date, on_hand
 from (select 'STRAW' as item_id, posexplode(array(5,0,0,3,0,0,0,2,0,4)) as (pos, on_hand));
+
+-- COMMAND ----------
+
+select * from d30_on_hand;
+
+-- COMMAND ----------
+
+select * from d30_on_hand;
+
+-- COMMAND ----------
+
+with outs as (select 
+item_id,calendar_date, on_hand,
+date_sub(calendar_date,
+    row_number() over (partition by item_id order by calendar_date) ) as streak_key
+from d30_on_hand
+where on_hand = 0)
+select
+    item_id, min(calendar_date) as start_date,
+    max(calendar_date) as end_date,
+    count(*) as days_out
+from outs
+group by item_id,streak_key
+order by item_id,streak_key;
 
 -- COMMAND ----------
 
