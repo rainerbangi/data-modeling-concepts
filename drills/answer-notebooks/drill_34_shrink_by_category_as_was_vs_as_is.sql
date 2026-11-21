@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** March shrink by category two ways: as-was (category at the time) and as-is (today's category).
+-- MAGIC **What this tests:** SCD2 joined to a fact, two ways, and knowing which one the business means.
+-- MAGIC
+-- MAGIC **Scenario:** Strawberries moved from "Berries" to "Fresh Berries" on Mar 10. The Berries manager asks why their March shrink looks low; the Fresh Berries manager asks why theirs looks high.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c34_category_changes`: `item_id, category, effective_date`.
+-- MAGIC - `c34_shrink`: `shrink_date, item_id, shrink_amt`.
+-- MAGIC
+-- MAGIC **Your task:** March shrink by category two ways: **as-was** (category at the time) and **as-is** (today's category).
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Build category history first (drill 7).
+-- MAGIC 2. As-was: join on the date. As-is: join to the current version only.
+-- MAGIC 3. Which view should each manager use, and why?
+-- MAGIC
+-- MAGIC **Check yourself:** both views total 20.
 
 -- COMMAND ----------
 

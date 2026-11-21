@@ -4,7 +4,25 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Apply `d03_incoming` to `d03_dim_store`. History does not matter. Running your statement twice must change nothing the second time.
+-- MAGIC **What this tests:** SCD Type 1 with `MERGE`, idempotent loads, and comparing values that can be null.
+-- MAGIC
+-- MAGIC **Scenario:** The store master has typos and missing regions. The business wants them fixed in place; nobody needs to know the old wrong values.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d03_dim_store`: your current dimension.
+-- MAGIC - `d03_incoming`: today's corrected store list, including a new store.
+-- MAGIC
+-- MAGIC **Your task:** write one statement that applies `d03_incoming` to `d03_dim_store`:
+-- MAGIC - update stores whose name or region changed,
+-- MAGIC - insert new stores,
+-- MAGIC - running it a second time must change nothing.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. One SQL statement can update matches and insert non-matches.
+-- MAGIC 2. Look at store B's old region. What does `null <> 'West'` return?
+-- MAGIC 3. Only update rows that actually changed, or a rerun rewrites everything.
+-- MAGIC
+-- MAGIC **Check yourself:** first run: 2 updates, 1 insert. Second run: 0 rows affected.
 
 -- COMMAND ----------
 

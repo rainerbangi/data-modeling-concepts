@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Revenue per sale at the price in effect that day, using `d07_price_scd2`. Flag sales with no price.
+-- MAGIC **What this tests:** point-in-time ("as-was") lookups into SCD2, the most common SCD2 query in practice.
+-- MAGIC
+-- MAGIC **Scenario:** Finance wants revenue per sale at the price that was in effect on the sale date, not today's price.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d16_sales`: `sale_id, item_id, sold_on, units`.
+-- MAGIC - `d07_price_scd2`: from drill 7.
+-- MAGIC
+-- MAGIC **Your task:** `sale_id, sold_on, units, price, revenue, is_unpriced` for every sale. Flag sales with no price instead of dropping them.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Join each sale to the version whose range contains its date.
+-- MAGIC 2. Look at the sale on Feb 15, the day the price changed.
+-- MAGIC 3. One sale happened before any price existed. Which join keeps it?
+-- MAGIC
+-- MAGIC **Check yourself:** 5 rows; one is flagged as unpriced.
 
 -- COMMAND ----------
 

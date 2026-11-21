@@ -4,7 +4,21 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Revenue by month at the price in effect, plus a count of units with no price.
+-- MAGIC **What this tests:** cleaning a messy price log, then pricing sales; combines drills 9, 10, 7 and 16.
+-- MAGIC
+-- MAGIC **Scenario:** Finance wants monthly revenue using the price in effect on each sale date, plus a count of units that couldn't be priced.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c35_price_changes`: `item_id, price, change_ts`. Effective the same day. Some days have more than one change; some changes repeat the previous price.
+-- MAGIC - `c35_sales`: `sold_on, item_id, units` (returns are negative).
+-- MAGIC
+-- MAGIC **Your task:** `month, revenue, unpriced_units`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Clean the log before closing versions: same-day changes, then repeats.
+-- MAGIC 2. One sale happened before any price existed.
+-- MAGIC
+-- MAGIC **Check yourself:** 3 months; one has null revenue and 1 unpriced unit.
 
 -- COMMAND ----------
 

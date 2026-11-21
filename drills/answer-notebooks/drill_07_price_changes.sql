@@ -4,7 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Build `d07_price_scd2 (item_id, price, valid_from, valid_to)`. Save it as a table; drill 16 uses it.
+-- MAGIC **What this tests:** turning a change log into SCD2 with `LEAD`, and the open-ended current row.
+-- MAGIC
+-- MAGIC **Scenario:** Pricing logs a row each time a price changes. Finance needs, for any day, the price that was in effect.
+-- MAGIC
+-- MAGIC **Raw data:** `d07_price_changes`, one row per price change: `item_id, price, effective_date`.
+-- MAGIC
+-- MAGIC **Your task:** build `d07_price_scd2 (item_id, price, valid_from, valid_to)`, one row per price version. `valid_from` included, `valid_to` excluded, current price ending 9999-12-31. Save it as a table; drill 16 uses it.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. A version ends when the next one starts.
+-- MAGIC 2. One window function looks at the next row in order.
+-- MAGIC 3. What does that function return for the newest price, and why is that a problem for later joins?
+-- MAGIC
+-- MAGIC **Check yourself:** 4 rows; no `valid_to` is null.
 
 -- COMMAND ----------
 

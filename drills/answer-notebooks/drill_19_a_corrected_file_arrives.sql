@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Load the corrected Mar 14 file. Running your load twice must give the same result.
+-- MAGIC **What this tests:** idempotent loads: rerunning a load must not change the result.
+-- MAGIC
+-- MAGIC **Scenario:** The vendor resends Mar 14 with corrected numbers and a new item. Your nightly job may also be rerun by mistake.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d19_fct_sales_daily`: your fact table, one row per day and item.
+-- MAGIC - `d19_file_0314`: the corrected file for Mar 14.
+-- MAGIC
+-- MAGIC **Your task:** load the corrected Mar 14 file. Running your statement twice must give the same result.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. What happens to Mar 14 if you just insert the file?
+-- MAGIC 2. Think "replace this date's data", not "add rows".
+-- MAGIC 3. Databricks can delete and insert for a date range in one atomic statement.
+-- MAGIC
+-- MAGIC **Check yourself:** Mar 13 unchanged; Mar 14 has STRAW 7 and BLUE 2; identical after a second run.
 
 -- COMMAND ----------
 

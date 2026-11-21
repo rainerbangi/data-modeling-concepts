@@ -4,7 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** One row per stockout streak: start, end, days out.
+-- MAGIC **What this tests:** gaps and islands, the classic "hard" SQL question.
+-- MAGIC
+-- MAGIC **Scenario:** The replenishment team wants every stockout streak: when it started, when it ended and how many days it lasted.
+-- MAGIC
+-- MAGIC **Raw data:** `d30_on_hand`: one row per item per day with `on_hand`.
+-- MAGIC
+-- MAGIC **Your task:** one row per streak of consecutive days with on_hand = 0: `out_from, out_to, days_out`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. `group by on_hand = 0` merges every out-of-stock day into one group. Why is that wrong?
+-- MAGIC 2. Mark the days where the status flips from yesterday.
+-- MAGIC 3. A running count of those flips gives each streak its own number.
+-- MAGIC
+-- MAGIC **Check yourself:** 3 streaks.
 
 -- COMMAND ----------
 

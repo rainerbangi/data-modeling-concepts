@@ -4,7 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** SCD2 by day. A change is effective on the day it was made.
+-- MAGIC **What this tests:** deduplicating a change log to the grain of the history (the day).
+-- MAGIC
+-- MAGIC **Scenario:** A manager set capacity to 70 in the morning and corrected it to 80 the same afternoon. Reports work at day level.
+-- MAGIC
+-- MAGIC **Raw data:** `d09_capacity_changes`, one row per save, with a timestamp `change_ts`. A change is effective on the day it was made.
+-- MAGIC
+-- MAGIC **Your task:** SCD2 by day: `store_id, item_id, capacity, valid_from, valid_to`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Build SCD2 straight from these rows and look at the 70 version's dates. What's wrong?
+-- MAGIC 2. Pick one row per store, item and **day**. Which one should win?
+-- MAGIC 3. "Latest row per group" has a standard window function.
+-- MAGIC
+-- MAGIC **Check yourself:** 2 versions; none starts and ends on the same day.
 
 -- COMMAND ----------
 

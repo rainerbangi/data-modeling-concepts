@@ -4,7 +4,21 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Build one row per store, item and day on promo, then list promo days with zero sales.
+-- MAGIC **What this tests:** factless facts (coverage) and anti-joins.
+-- MAGIC
+-- MAGIC **Scenario:** The promo team asks: "Which days was strawberry on promo at store A but sold nothing?"
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d28_promos`: promo date ranges (**end date inclusive**).
+-- MAGIC - `d28_daily_sales`: one row per store, item and day **with** sales.
+-- MAGIC
+-- MAGIC **Your task:** build one row per store, item and day on promo, then list the promo days with zero sales.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. The days you want aren't in the sales table at all.
+-- MAGIC 2. Expand each promo into one row per day it ran.
+-- MAGIC
+-- MAGIC **Check yourself:** 2 days.
 
 -- COMMAND ----------
 
