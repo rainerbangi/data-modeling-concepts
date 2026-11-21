@@ -28,7 +28,7 @@ This repo trains Rainer to be a strong analytics engineer: dimensional modeling,
 - Aggregate each source to the grain before joining. Use a full outer join to combine feeds.
 - SCD2: `valid_from` included, `valid_to` excluded, open row `9999-12-31`. Join with the sandwich: `valid_from <= d and d < valid_to`. Use `between` only for inclusive end dates (such as promotions).
 - Change log to SCD2: clean (latest per day), collapse (drop repeats), close (`lead`), then expand to days if needed. Filter after window functions, not before.
-- Missing state = null; missing events = 0.
+- A missing state value (capacity, stock, price) is unknown, so leave it null. A missing event (a sale, a delivery) means nothing happened, so count it as zero.
 - Measures: events add, levels average across time, rates and distinct counts recompute.
 - Ratios: sum the parts, divide last, `nullif` the denominator.
 - No `qualify`: filter `row_number()` in a separate CTE.

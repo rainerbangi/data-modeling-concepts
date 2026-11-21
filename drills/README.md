@@ -39,7 +39,7 @@ Every setup block assumes `use workspace.drills;`. Drill 1 builds `d01_dim_date`
 
 ## Two rules that prevent wrong numbers
 
-### 1. Missing state = null, missing events = 0
+### 1. A missing state is unknown; a missing event is zero
 
 A missing row means different things depending on what the table records.
 
