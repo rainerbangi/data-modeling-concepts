@@ -15,7 +15,7 @@ Your SQL can differ. What must match: the expected result, and that you named th
 **Conventions used everywhere**
 - SCD2 ranges are half-open: `valid_from` included, `valid_to` excluded, open row `9999-12-31`.
 - The sandwich join: `valid_from <= d and d < valid_to`. Each day lands in exactly one version.
-- Missing **state** = null (unknown). Missing **events** = 0 (nothing happened).
+- A missing **state** value is unknown, so it stays null. A missing **event** means nothing happened, so it counts as zero.
 - Ratios: sum the parts, divide last, `nullif` the denominator.
 
 ---
@@ -750,7 +750,7 @@ k as (                                                                 -- step 2
 select coalesce(s.d, k.d)               as calendar_date,              -- step 4: keys from either side
        coalesce(s.store_id, k.store_id) as store_id,
        coalesce(s.item_id, k.item_id)   as item_id,
-       coalesce(s.units_sold, 0)        as units_sold,                 --   no event = 0
+       coalesce(s.units_sold, 0)        as units_sold,                 --   no sale means zero sold
        coalesce(k.shrink_units, 0)      as shrink_units
 from s
 full outer join k                                                      -- step 3
@@ -1227,7 +1227,7 @@ For each combo, name the drills it combines **before** writing SQL. That's what 
 1. Capacity SCD2 with the business rules (drill 11).
 2. Expand to daily rows with the sandwich (drill 8).
 3. Dedupe sales, then sum per store, item and day (drill 17).
-4. Full outer join on the grain. Missing sales = 0; missing capacity stays null.
+4. Full outer join on the grain. Days with no sales count as zero sold; days with no capacity stay null.
 5. Metric: per store and day, sum capacity and units across items; then average each across days and divide.
 
 ```sql
@@ -1272,8 +1272,8 @@ sales_daily as (
 select coalesce(s.calendar_date, c.calendar_date) as calendar_date,      -- step 4: drill 20
        coalesce(s.store_id, c.store_id)           as store_id,
        coalesce(s.item_id, c.item_id)             as item_id,
-       coalesce(s.units_sold, 0)                  as units_sold,         -- missing event = 0
-       c.capacity                                 as capacity_units      -- missing state = null
+       coalesce(s.units_sold, 0)                  as units_sold,         -- no sale means zero sold
+       c.capacity                                 as capacity_units      -- no capacity means unknown, so null
 from sales_daily s
 full outer join cap_daily c
   on s.calendar_date = c.calendar_date and s.store_id = c.store_id and s.item_id = c.item_id;
@@ -1621,7 +1621,7 @@ group by w.store_id;
 **Step 3: the model.**
 - `dim_sku` (SCD2, from the nightly dump), `dim_store`, `dim_date`
 - `int_capacity_scd2` → `int_capacity_daily` (sandwich join)
-- `fct_store_sku_daily`: grain store × SKU × day. `units_sold` from deduped lines (missing = 0), `capacity_units` from daily capacity (missing = null). Full outer join.
+- `fct_store_sku_daily`: grain store × SKU × day. `units_sold` from deduped lines (zero when there were no sales), `capacity_units` from daily capacity (null when unknown). Full outer join.
 
 **Step 4: the metric.** For each category and day, sum capacity and units across stores and SKUs, with category as-was (sandwich join to `dim_sku` on the day). Then average each over the last 7 complete days and divide. Use only days with known capacity.
 
