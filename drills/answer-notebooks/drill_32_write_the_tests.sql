@@ -4,7 +4,23 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Write three tests that must return 0 rows: grain, SCD2 overlap, reconciliation. All three should fail on this data.
+-- MAGIC **What this tests:** data tests that pass with zero rows, the way dbt tests work.
+-- MAGIC
+-- MAGIC **Scenario:** Before shipping a model, you add automated checks. A check must **return rows only when something is wrong**.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d32_source_sales`: the source.
+-- MAGIC - `d32_fct`: the fact (one row per day, store, item, or so it claims).
+-- MAGIC - `d32_dim_item`: an SCD2 dimension.
+-- MAGIC
+-- MAGIC **Your task:** three tests: (1) the fact's grain is unique, (2) no two SCD2 versions of an item overlap, (3) fact total equals source total. All three should fail on this data.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. A duplicate grain is a group with more than one row.
+-- MAGIC 2. Two ranges overlap when each starts before the other ends.
+-- MAGIC 3. Compare two single-row totals; return a row only if they differ.
+-- MAGIC
+-- MAGIC **Check yourself:** each test returns at least one row on this data.
 
 -- COMMAND ----------
 

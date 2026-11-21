@@ -4,7 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** For period 14: shrink rate, rate last year, change in points, change in percent.
+-- MAGIC **What this tests:** year-over-year comparisons, and points vs percent.
+-- MAGIC
+-- MAGIC **Scenario:** Customer success wants to tell a grocer how shrink changed versus the same fiscal period last year. There are 13 fiscal periods a year, numbered with a running sequence.
+-- MAGIC
+-- MAGIC **Raw data:** `d31_agg`: `store_id, fiscal_period_seq, shrink_amt, sales_amt`.
+-- MAGIC
+-- MAGIC **Your task:** for period 14: shrink rate, last year's rate, change in **points** and change in **percent**.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. With a running period number, "last year" is simple arithmetic.
+-- MAGIC 2. Join the table to itself.
+-- MAGIC 3. If a rate goes from 10% to 8%, how many points did it change? How many percent?
+-- MAGIC
+-- MAGIC **Check yourself:** your change in points and your change in percent are different numbers.
 
 -- COMMAND ----------
 

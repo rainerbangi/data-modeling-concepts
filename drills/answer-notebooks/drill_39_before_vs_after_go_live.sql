@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Shrink rate for the 2 weeks before vs the 2 weeks starting at go-live, per store, and the change in points. Only include stores with all 4 weeks.
+-- MAGIC **What this tests:** comparing windows relative to an event date that differs per store, and fair comparisons.
+-- MAGIC
+-- MAGIC **Scenario:** Customer success wants to show each grocer how shrink changed after the product went live. Compare the 2 weeks before go-live with the first 2 weeks after.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c39_stores`: `store_id, go_live_date`.
+-- MAGIC - `c39_weekly`: `store_id, week_start, shrink_amt, sales_amt`.
+-- MAGIC
+-- MAGIC **Your task:** per store: shrink rate before, rate after, change in points. Only include stores with all 4 weeks of data.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Measure weeks relative to each store's own go-live date.
+-- MAGIC 2. Does every store have a full window?
+-- MAGIC 3. Rates: sum the parts, then divide.
+-- MAGIC
+-- MAGIC **Check yourself:** stores without all 4 weeks are excluded.
 
 -- COMMAND ----------
 

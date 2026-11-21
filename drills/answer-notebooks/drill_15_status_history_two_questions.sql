@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** (a) How many POs were in "shipped" status on Mar 5? (b) Average days from ordered to received, for received POs. Which shape fits each question?
+-- MAGIC **What this tests:** choosing the shape from the **question**, not the table.
+-- MAGIC
+-- MAGIC **Scenario:** The supply chain team has a log of purchase order status changes and asks two things:
+-- MAGIC (a) "How many POs were in shipped status on Mar 5?"
+-- MAGIC (b) "On average, how many days from ordered to received?"
+-- MAGIC
+-- MAGIC **Raw data:** `d15_po_status`: `po_id, status ('ordered', 'shipped', 'received'), status_at`.
+-- MAGIC
+-- MAGIC **Your task:** answer both questions.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. (a) is about the state at one moment. Which shape answers "what was true on a date"?
+-- MAGIC 2. (b) is about time between two steps. What if each PO were one row with a column per step?
+-- MAGIC 3. Not every PO has been received.
+-- MAGIC
+-- MAGIC **Check yourself:** (b) uses only POs that were received.
 
 -- COMMAND ----------
 

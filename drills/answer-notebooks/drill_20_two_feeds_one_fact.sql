@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** One row per store, item and day with `units_sold` and `shrink_units`.
+-- MAGIC **What this tests:** combining two event sources at one grain without multiplying rows (fan-out).
+-- MAGIC
+-- MAGIC **Scenario:** You're building `fct_store_item_daily` with both units sold and shrink units, from two separate feeds.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d20_sales`: one row per sale.
+-- MAGIC - `d20_shrink`: one row per shrink log (spoiled, damaged).
+-- MAGIC
+-- MAGIC **Your task:** one row per store, item and day, with `units_sold` and `shrink_units`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Join the raw tables and look at Mar 14's totals. What happened?
+-- MAGIC 2. Get each feed to the output grain **before** joining.
+-- MAGIC 3. Some days exist in only one feed. Which join keeps both?
+-- MAGIC
+-- MAGIC **Check yourself:** each column's total equals its feed's raw total, and days found in only one feed still appear.
 
 -- COMMAND ----------
 

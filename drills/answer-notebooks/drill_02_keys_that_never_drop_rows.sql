@@ -4,7 +4,26 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Build `d02_dim_store (store_key, store_id, store_name)` with surrogate keys, then a sales fact with `store_key`. Every sale must survive. Total units must be 11.
+-- MAGIC **What this tests:** surrogate keys, and protecting fact rows from missing dimension rows (orphans).
+-- MAGIC
+-- MAGIC **Scenario:** Finance says the sales dashboard shows fewer units than the POS system. You suspect some sales point to stores that aren't in the store table.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d02_stores`: one row per known store.
+-- MAGIC - `d02_sales`: one row per sale, with `store_id` and `units`. Some `store_id` values are unknown, and one is missing.
+-- MAGIC
+-- MAGIC **Your task:**
+-- MAGIC 1. Build `d02_dim_store (store_key, store_id, store_name)` with a surrogate key.
+-- MAGIC 2. Write the sales fact query with `sale_id, store_key, units`.
+-- MAGIC
+-- MAGIC Every sale must appear, and total units must equal the source total.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. What does an inner join do to a sale whose store isn't in the dimension?
+-- MAGIC 2. Data warehouses often keep one special dimension row for "we don't know which store".
+-- MAGIC 3. A hash of the business key gives the same surrogate key every time you rebuild.
+-- MAGIC
+-- MAGIC **Check yourself:** every sale appears once, and total units equal the source table's total.
 
 -- COMMAND ----------
 

@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Units by ordered week and received week in one query, using `d01_dim_date`. Undelivered POs must still appear.
+-- MAGIC **What this tests:** role-playing dimensions, and keeping rows whose second date isn't known yet.
+-- MAGIC
+-- MAGIC **Scenario:** The supply chain team wants delivery volume by the week a PO was **ordered** and the week it was **received**, in one table.
+-- MAGIC
+-- MAGIC **Raw data:** `d05_deliveries`, one row per purchase order, with `ordered_date`, `received_date` (null if not delivered yet) and `units`.
+-- MAGIC
+-- MAGIC **Your task:** one query returning `ordered_week, received_week, units`, using `d01_dim_date` for the weeks. POs not yet received must still appear.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. You need the date table twice in one query. How do you tell the two apart?
+-- MAGIC 2. One of the two dates can be null. Which join keeps that row?
+-- MAGIC
+-- MAGIC **Check yourself:** total units equal the source total, and POs not yet received still appear.
 
 -- COMMAND ----------
 

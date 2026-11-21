@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Per day: computed on-hand, counted on-hand, drift (counted minus computed), and unexplained loss that day.
+-- MAGIC **What this tests:** reconciling two sources of truth, and cumulative vs daily differences.
+-- MAGIC
+-- MAGIC **Scenario:** Loss prevention wants to know how much stock went missing each day: the gap between stock calculated from movements and stock counted on the shelf.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c36_opening`: on-hand at the end of Mar 8.
+-- MAGIC - `c36_events`: stock movements.
+-- MAGIC - `c36_counts`: physical counts per day.
+-- MAGIC
+-- MAGIC **Your task:** per day: computed on-hand, counted on-hand, drift (counted − computed) and **unexplained loss that day**.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Computed on-hand is drill 25.
+-- MAGIC 2. Drift carries over from one day to the next. How much of today's drift is new today?
+-- MAGIC
+-- MAGIC **Check yourself:** each day's unexplained loss adds up to the latest drift.
 
 -- COMMAND ----------
 

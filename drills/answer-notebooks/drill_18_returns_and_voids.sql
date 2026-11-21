@@ -4,9 +4,26 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Rule:** a void cancels the referenced sale completely. A return is a new event on its own date.
+-- MAGIC **What this tests:** business rules for corrections, and a classic null trap with `NOT IN`.
 -- MAGIC
--- MAGIC **Task:** Net units per day.
+-- MAGIC **Scenario:** Finance needs net units per day. The POS records three kinds of transactions.
+-- MAGIC
+-- MAGIC **Raw data:** `d18_txns`: `txn_id, txn_type, ref_txn_id, sold_on, item_id, units`.
+-- MAGIC
+-- MAGIC | txn_type | Meaning |
+-- MAGIC |---|---|
+-- MAGIC | sale | a normal sale |
+-- MAGIC | return | a customer brings an item back on a later day (negative units, its own date) |
+-- MAGIC | void | a cashier cancels a sale completely; `ref_txn_id` points to it |
+-- MAGIC
+-- MAGIC **Your task:** net units per day.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. A return and a void are different: one is a new event, the other erases an event.
+-- MAGIC 2. Try `txn_id not in (select ref_txn_id from d18_txns)`. Why does it return nothing?
+-- MAGIC 3. There's a null-safe way to say "no void points to this sale".
+-- MAGIC
+-- MAGIC **Check yourself:** a voided sale contributes nothing, and a return counts on its own date.
 
 -- COMMAND ----------
 

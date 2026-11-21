@@ -4,7 +4,24 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Build `c33_fct_store_item_daily` (units_sold, capacity_units) through SCD2 and daily capacity. Then days of cover per store for Mar 14 to 16 = avg daily capacity / avg daily units sold, over days where capacity is known.
+-- MAGIC **What this tests:** the whole pipeline end to end: change log → SCD2 → daily, deduped sales, full outer join, and a semi-additive metric. Combines drills 11, 8, 17, 20 and 23.
+-- MAGIC
+-- MAGIC **Scenario:** Category managers want **days of cover** per store: how many days of sales the shelf can hold. You must build the daily fact first, then the metric.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c33_capacity_changes`: same table and rules as drill 11 (next-day effect, start date, several saves a day, repeated saves).
+-- MAGIC - `c33_sales`: one row per sale; corrected sales are re-sent with a newer `loaded_at`; returns have negative units.
+-- MAGIC
+-- MAGIC **Your task:**
+-- MAGIC 1. Build `c33_fct_store_item_daily (calendar_date, store_id, item_id, units_sold, capacity_units)`.
+-- MAGIC 2. Days of cover per store for Mar 14 to 16 = average daily capacity ÷ average daily units sold, using only days where capacity is known.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Draw the boxes first: capacity side, sales side, then the join.
+-- MAGIC 2. A sale before capacity exists: is its capacity 0 or unknown?
+-- MAGIC 3. Capacity adds across items on a day but not across days.
+-- MAGIC
+-- MAGIC **Check yourself:** the fact has one row per store, item and day, and capacity is null (not 0) where unknown.
 
 -- COMMAND ----------
 

@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** SCD2. What was the capacity on Mar 15? On Mar 16?
+-- MAGIC **What this tests:** the difference between when something **takes effect** and when it was **entered**.
+-- MAGIC
+-- MAGIC **Scenario:** Ops sometimes enters a capacity change days after it actually happened, with the real effective date. Finance wants history that reflects what was true on each day, using the best information available now.
+-- MAGIC
+-- MAGIC **Raw data:** `d12_capacity_changes`: `store_id, item_id, capacity, effective_date, entered_at`.
+-- MAGIC
+-- MAGIC **Your task:** SCD2, then answer: what was the capacity on Mar 15? On Mar 16?
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Which date orders the timeline: effective or entered?
+-- MAGIC 2. Two entries have the same effective date. Which one is the truth?
+-- MAGIC
+-- MAGIC **Check yourself:** versions follow the effective dates, and each effective date appears once.
 
 -- COMMAND ----------
 

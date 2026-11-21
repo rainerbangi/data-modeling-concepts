@@ -4,9 +4,23 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** (a) Units sold under each promo. (b) Total units sold while the item was on any promo.
+-- MAGIC **What this tests:** many-to-many relationships (bridge tables) and double counting.
 -- MAGIC
--- MAGIC **Check yourself:** (b) is 19.
+-- MAGIC **Scenario:** Marketing asks two questions: "How many units did each promo drive?" and "How many units in total were sold while on any promo?"
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d06_promos`: one row per promo, with start and end dates (**end date inclusive**).
+-- MAGIC - `d06_promo_items`: which items each promo covers (a bridge: one row per promo and item).
+-- MAGIC - `d06_sales`: one row per sale.
+-- MAGIC
+-- MAGIC **Your task:** (a) units per promo; (b) total units sold while the item was on any promo.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Look for a sale whose item and date fit **two** promos.
+-- MAGIC 2. (a) and (b) are different questions; one can count a sale twice, the other can't.
+-- MAGIC 3. For (b), you want a yes/no per sale: "is there any promo that covers it?"
+-- MAGIC
+-- MAGIC **Check yourself:** (b) is smaller than the sum of your (a) rows. Can you explain why?
 
 -- COMMAND ----------
 

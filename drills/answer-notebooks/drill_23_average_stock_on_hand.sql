@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Average daily on-hand units for store A over Mar 9 to 11.
+-- MAGIC **What this tests:** semi-additive measures: adding across items but not across days.
+-- MAGIC
+-- MAGIC **Scenario:** The store manager asks, "On average, how many units did store A have on its shelves each night this week?"
+-- MAGIC
+-- MAGIC **Raw data:** `d23_counts`: one row per store, item and night with `on_hand`.
+-- MAGIC
+-- MAGIC **Your task:** average daily on-hand units for store A over Mar 9 to 11.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. What does `sum(on_hand)` over all rows represent? Does it mean anything?
+-- MAGIC 2. Get the store's total per night first, then decide how to combine nights.
+-- MAGIC
+-- MAGIC **Check yourself:** your answer falls between the smallest and largest nightly store total.
 
 -- COMMAND ----------
 

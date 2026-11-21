@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** List every store and day from Mar 1 to 7 with no snapshot.
+-- MAGIC **What this tests:** finding rows that **don't** exist (coverage checks).
+-- MAGIC
+-- MAGIC **Scenario:** Data quality asks: "Which stores failed to send a daily snapshot in the first week of March?"
+-- MAGIC
+-- MAGIC **Raw data:** `d26_snapshots`: one row per store per day that a snapshot arrived.
+-- MAGIC
+-- MAGIC **Your task:** list every store and day from Mar 1 to 7 with no snapshot.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. You can't find a missing row by looking at the rows that exist.
+-- MAGIC 2. Build the list of rows that **should** exist, then compare.
+-- MAGIC
+-- MAGIC **Check yourself:** every row you return is a store and day with no snapshot.
 
 -- COMMAND ----------
 

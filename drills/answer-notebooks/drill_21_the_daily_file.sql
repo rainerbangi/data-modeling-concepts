@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** There is a row every day. Is this a snapshot? Give units sold for the week and explain in one sentence why your aggregate is valid.
+-- MAGIC **What this tests:** classifying a table correctly when it looks like something else.
+-- MAGIC
+-- MAGIC **Scenario:** A vendor sends one row per item per day, with zeros on days with no sales. A colleague calls it "the daily sales snapshot".
+-- MAGIC
+-- MAGIC **Raw data:** `d21_daily_item_sales`: `item_id, sale_date, units`.
+-- MAGIC
+-- MAGIC **Your task:** units sold for the week of Mar 9 to 15, and one sentence on why your aggregate is valid.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Read one row aloud. Did something happen, or is something true?
+-- MAGIC 2. Does adding up a week of rows give a real number?
+-- MAGIC
+-- MAGIC **Check yourself:** you can explain in one sentence why adding these rows is valid.
 
 -- COMMAND ----------
 

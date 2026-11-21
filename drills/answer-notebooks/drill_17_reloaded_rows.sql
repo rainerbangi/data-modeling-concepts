@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Units per item per day.
+-- MAGIC **What this tests:** keeping the latest row per key, the most common SQL screen question.
+-- MAGIC
+-- MAGIC **Scenario:** The POS vendor re-sends a sale when it's corrected. Each copy has the same `sale_id` and a newer `loaded_at`. The sales report should count each sale once, using its latest version.
+-- MAGIC
+-- MAGIC **Raw data:** `d17_sales`: `sale_id, sold_at, item_id, units, loaded_at`.
+-- MAGIC
+-- MAGIC **Your task:** units per item per day: `sale_date, item_id, units`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Find the sale that appears more than once. Which copy is right?
+-- MAGIC 2. Rank copies within each `sale_id`, newest first.
+-- MAGIC
+-- MAGIC **Check yourself:** each `sale_id` is counted once.
 
 -- COMMAND ----------
 

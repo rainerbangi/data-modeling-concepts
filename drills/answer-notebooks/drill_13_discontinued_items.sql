@@ -4,7 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** SCD2. No version may exist on or after the discontinue date.
+-- MAGIC **What this tests:** end events in a change log, and when a `WHERE` clause runs relative to window functions.
+-- MAGIC
+-- MAGIC **Scenario:** When an item is discontinued, the log records a "discontinue" event. Reports must not show capacity for it after that date.
+-- MAGIC
+-- MAGIC **Raw data:** `d13_capacity_events`: `item_id, action ('set' or 'discontinue'), capacity, effective_date`.
+-- MAGIC
+-- MAGIC **Your task:** SCD2 of capacity. No version may exist on or after the discontinue date.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Is a discontinue row a version, or the end of one?
+-- MAGIC 2. If you filter out discontinue rows first, what does `LEAD` see for the last real version?
+-- MAGIC
+-- MAGIC **Check yourself:** no version covers the discontinue date or anything after it.
 
 -- COMMAND ----------
 

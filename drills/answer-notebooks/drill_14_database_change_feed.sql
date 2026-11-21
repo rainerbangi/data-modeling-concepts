@@ -4,7 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** SCD2 of item category by day. `op` is insert, update or delete.
+-- MAGIC **What this tests:** turning a CDC feed (insert, update, delete) into SCD2; combines drills 9, 10 and 13.
+-- MAGIC
+-- MAGIC **Scenario:** The item database streams every change to a feed. You need item category history by day.
+-- MAGIC
+-- MAGIC **Raw data:** `d14_item_cdc`: `op ('I' insert, 'U' update, 'D' delete), item_id, category, commit_ts`.
+-- MAGIC
+-- MAGIC **Your task:** SCD2 of item category by day: `item_id, category, valid_from, valid_to`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Look for noise: a row that appears twice, and an update that doesn't change anything.
+-- MAGIC 2. What should a delete do to the item's history?
+-- MAGIC 3. Deletes have a null category. Which comparison handles nulls?
+-- MAGIC
+-- MAGIC **Check yourself:** no duplicate or no-op versions, and nothing is active for a deleted item after its delete.
 
 -- COMMAND ----------
 

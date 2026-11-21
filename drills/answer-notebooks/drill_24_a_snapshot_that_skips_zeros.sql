@@ -4,9 +4,21 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Rule:** the file lists only items with stock above zero.
+-- MAGIC **What this tests:** the meaning of a missing row: zero vs unknown.
 -- MAGIC
--- MAGIC **Task:** On-hand for STRAW and BLUE on every day from Mar 9 to 12.
+-- MAGIC **Scenario:** The inventory system sends a nightly file, but it only lists items with stock **above zero**. One night the file never arrived.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d24_counts`: `count_date, item_id, on_hand`.
+-- MAGIC - `d24_file_log`: `file_date, arrived` (true or false).
+-- MAGIC
+-- MAGIC **Your task:** on-hand for STRAW and BLUE on every day from Mar 9 to 12.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. You need a row for every item and day, even ones not in the file.
+-- MAGIC 2. An item missing from a file that arrived means something different from an item on a day with no file.
+-- MAGIC
+-- MAGIC **Check yourself:** 8 rows, and you can explain why each empty value is 0 or null.
 
 -- COMMAND ----------
 

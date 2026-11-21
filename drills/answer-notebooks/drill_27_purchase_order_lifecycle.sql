@@ -4,7 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** One row per PO with a timestamp per step, days from ordered to received, and an `is_overdue` flag: not received and more than 5 days since ordering, as of Mar 10.
+-- MAGIC **What this tests:** the accumulating snapshot: one row per process, a column per step.
+-- MAGIC
+-- MAGIC **Scenario:** The supply chain lead wants a PO tracker: when each PO was ordered, shipped and received, how long receiving took, and which POs are overdue.
+-- MAGIC
+-- MAGIC **Raw data:** `d27_po_events`: `po_id, status, status_at`. Events can be duplicated.
+-- MAGIC
+-- MAGIC **Your task:** one row per PO with `ordered_at, shipped_at, received_at, days_to_receive, is_overdue`. Overdue = not received and more than 5 days since ordering, as of Mar 10.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Turn rows (one per event) into columns (one per step).
+-- MAGIC 2. `min` or `max` combined with `case when` picks one timestamp per step.
+-- MAGIC 3. POs still in progress must stay in the result.
+-- MAGIC
+-- MAGIC **Check yourself:** one row per PO, and POs still in progress appear.
 
 -- COMMAND ----------
 

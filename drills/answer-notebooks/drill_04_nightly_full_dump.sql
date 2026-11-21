@@ -4,9 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** The source sends its full item list every night. Apply the 2026-03-02 dump to `d04_dim_item` so category history is kept.
+-- MAGIC **What this tests:** building SCD Type 2 from a source that only shows **current** values.
 -- MAGIC
--- MAGIC **Check yourself:** STRAW has 2 rows, BLUE 1, KIWI 1. Exactly 3 rows are current.
+-- MAGIC **Scenario:** The item system can't send changes. Every night it sends the **whole** item list as it is now. Merchandising wants to report sales by the category an item had *at the time*, so you must keep history.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d04_dim_item`: your SCD2 item dimension (`valid_from`, `valid_to`, `is_current`).
+-- MAGIC - `d04_dump_0302`: the full item list sent on 2026-03-02.
+-- MAGIC
+-- MAGIC **Your task:** apply the Mar 2 dump so category history is kept: close versions that changed, open new versions, and add new items. Unchanged items stay as they are.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Compare tonight's list with only the **current** version of each item.
+-- MAGIC 2. A changed item needs two actions: close the old version and open a new one. Can one `MERGE` row do both?
+-- MAGIC 3. After closing, "which items have no current version?" catches both changed and brand-new items.
+-- MAGIC
+-- MAGIC **Check yourself:** exactly one current row per item, and unchanged items keep their original row.
 
 -- COMMAND ----------
 

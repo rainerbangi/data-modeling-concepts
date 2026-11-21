@@ -4,9 +4,19 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** SCD2 with one row per real change.
+-- MAGIC **What this tests:** collapsing repeated values, and why step order matters.
 -- MAGIC
--- MAGIC **Check yourself:** 3 versions.
+-- MAGIC **Scenario:** The capacity tool logs a row every time someone clicks save, even when the number didn't change. History should only show real changes.
+-- MAGIC
+-- MAGIC **Raw data:** `d10_capacity_changes`: `item_id, capacity, changed_on`.
+-- MAGIC
+-- MAGIC **Your task:** SCD2 with one row per **real** change.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Compare each row with the row before it.
+-- MAGIC 2. Should you remove repeats before or after you compute `valid_to`? Try both on paper.
+-- MAGIC
+-- MAGIC **Check yourself:** no two back-to-back versions of an item have the same capacity.
 
 -- COMMAND ----------
 

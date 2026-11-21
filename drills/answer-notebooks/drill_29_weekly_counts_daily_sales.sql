@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Weekly sell-through = units sold in the week / on-hand at the week's open.
+-- MAGIC **What this tests:** aligning two grains before combining them.
+-- MAGIC
+-- MAGIC **Scenario:** Stock is counted once a week (at the week's open); sales are daily. The category manager wants weekly sell-through = units sold in the week ÷ on-hand at the week's open.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d29_weekly_counts`: `week_start, item_id, on_hand_at_open`.
+-- MAGIC - `d29_daily_sales`: `sale_date, item_id, units`.
+-- MAGIC
+-- MAGIC **Your task:** sell-through per item per week.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. What happens if you join daily rows straight to weekly rows?
+-- MAGIC 2. Which table should change grain, and which direction is safe?
+-- MAGIC 3. `d01_dim_date` already knows each date's week.
+-- MAGIC
+-- MAGIC **Check yourself:** one row per item per week.
 
 -- COMMAND ----------
 

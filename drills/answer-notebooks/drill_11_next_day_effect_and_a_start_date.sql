@@ -4,11 +4,33 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Rule:** a change takes effect the day after `change_timestamp`, but never before `start_date`.
+-- MAGIC **What this tests:** applying business rules to a change log before the standard SCD2 steps; combines drills 9 and 10.
 -- MAGIC
--- MAGIC **Task:** SCD2.
+-- MAGIC **Scenario:** Store managers reset shelves after closing and save the new capacity in a back-office tool. The forecasting team needs capacity for any store, item and date.
 -- MAGIC
--- MAGIC **Check yourself:** 3 versions in total.
+-- MAGIC **Raw data:** `d11_capacity_changes`, one row each time a manager saves a capacity.
+-- MAGIC
+-- MAGIC | Column | Meaning |
+-- MAGIC |---|---|
+-- MAGIC | store_id, item_id | the store and item |
+-- MAGIC | capacity | units the shelf holds after the reset |
+-- MAGIC | start_date | the date the item starts selling in that store |
+-- MAGIC | change_timestamp | when the manager clicked save |
+-- MAGIC
+-- MAGIC **What the store ops team tells you if you ask:**
+-- MAGIC - A change takes effect the **next morning**.
+-- MAGIC - No capacity applies before the item's start date.
+-- MAGIC - Managers sometimes save several times in a day; the last save counts.
+-- MAGIC - The tool logs a save even if the value didn't change.
+-- MAGIC
+-- MAGIC **Your task:** SCD2: `store_id, item_id, capacity, valid_from, valid_to`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Work out each row's **effective date** first, applying both date rules.
+-- MAGIC 2. Then it's the drill 9 and 10 steps, on the effective date.
+-- MAGIC 3. Two different saves can land on the same effective date. Check store A.
+-- MAGIC
+-- MAGIC **Check yourself:** versions never overlap or leave gaps, no two back-to-back versions have the same capacity, and nothing starts before `start_date`.
 
 -- COMMAND ----------
 
