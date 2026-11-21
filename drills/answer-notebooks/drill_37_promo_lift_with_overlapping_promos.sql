@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** For Mar 1 to 10: average daily units on promo days vs non-promo days.
+-- MAGIC **What this tests:** comparing averages fairly: count each day once, and include days with no sales.
+-- MAGIC
+-- MAGIC **Scenario:** Marketing asks whether strawberries sell more per day on promo than off promo, for Mar 1 to 10. Two promos overlap.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c37_promos`: promo date ranges (**end date inclusive**).
+-- MAGIC - `c37_sales`: `sale_date, item_id, units` (days with no sales have no row).
+-- MAGIC
+-- MAGIC **Your task:** average daily units on promo days vs non-promo days.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. A day covered by two promos is still one day.
+-- MAGIC 2. Days with no sales must count, as zero.
+-- MAGIC 3. Start from a list of every day, not from the sales table.
+-- MAGIC
+-- MAGIC **Check yourself:** 10 days in total; 8 on promo.
 
 -- COMMAND ----------
 

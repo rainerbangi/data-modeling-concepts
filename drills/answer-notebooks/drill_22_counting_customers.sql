@@ -4,7 +4,21 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** A daily fact with units and distinct customers. Then distinct customers for the week of Mar 9 to 15.
+-- MAGIC **What this tests:** non-additive measures (distinct counts), the "daily vs weekly active users" trap.
+-- MAGIC
+-- MAGIC **Scenario:** Marketing wants a daily table with units and the number of customers, and then the number of customers for the week.
+-- MAGIC
+-- MAGIC **Raw data:** `d22_lines`: one row per basket line, with `customer_id, sold_on, item_id, units`.
+-- MAGIC
+-- MAGIC **Your task:**
+-- MAGIC 1. A daily result with units and distinct customers.
+-- MAGIC 2. Distinct customers for the week of Mar 9 to 15.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Add up your daily customer counts. Is that the weekly answer?
+-- MAGIC 2. Look for a customer who shopped on more than one day.
+-- MAGIC
+-- MAGIC **Check yourself:** daily customers add up to 3; the weekly answer is not 3.
 
 -- COMMAND ----------
 

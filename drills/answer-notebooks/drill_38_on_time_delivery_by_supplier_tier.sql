@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** On-time rate (received within 3 days) by supplier tier at the time of ordering. Only received POs count.
+-- MAGIC **What this tests:** an accumulating snapshot plus an as-was SCD2 lookup; combines drills 27, 7 and 16.
+-- MAGIC
+-- MAGIC **Scenario:** Procurement says Preferred suppliers deliver on time more often. Supplier S1 was upgraded to Preferred on Mar 5. Test the claim fairly.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `c38_tier_changes`: `supplier_id, tier, effective_date`.
+-- MAGIC - `c38_po_events`: `po_id, supplier_id, status, status_at`.
+-- MAGIC
+-- MAGIC **Your task:** on-time rate (received within 3 days of ordering) by the supplier's tier **when the PO was ordered**. Only received POs count.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Make one row per PO first.
+-- MAGIC 2. Which date decides the tier: order, receipt or today?
+-- MAGIC 3. A rate is the average of a 1/0 flag.
+-- MAGIC
+-- MAGIC **Check yourself:** 3 POs counted; 1 is excluded.
 
 -- COMMAND ----------
 

@@ -4,9 +4,20 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** Capacity for every store, item and day from 2026-03-13 to 2026-03-17.
+-- MAGIC **What this tests:** expanding SCD2 ranges into daily rows, and the boundary-day bug.
 -- MAGIC
--- MAGIC **Check yourself:** 7 rows. Mar 15 for store A appears once.
+-- MAGIC **Scenario:** The forecasting model needs shelf capacity for **every** store, item and day, so it can sit next to daily sales.
+-- MAGIC
+-- MAGIC **Raw data:** `d08_capacity_changes`, one row per capacity change: `store_id, item_id, capacity, changed_on`.
+-- MAGIC
+-- MAGIC **Your task:** capacity for every store, item and day from 2026-03-13 to 2026-03-17: `calendar_date, store_id, item_id, capacity`.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. First close each version (drill 7), then join to the calendar.
+-- MAGIC 2. Which versions contain a given date? Write the condition with both ends.
+-- MAGIC 3. On the day capacity changes, how many versions does your condition match?
+-- MAGIC
+-- MAGIC **Check yourself:** 7 rows. Mar 15 for store A appears once, with 80.
 
 -- COMMAND ----------
 

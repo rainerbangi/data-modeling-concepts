@@ -4,7 +4,22 @@
 -- MAGIC
 -- MAGIC **Before you write SQL, say out loud:** what one row of each raw table means, the shape, and the grain of your output.
 -- MAGIC
--- MAGIC **Task:** End-of-day on-hand for every day from Mar 9 to 12. The opening balance is end of day Mar 8.
+-- MAGIC **What this tests:** building a daily snapshot from events with a date spine and a running total.
+-- MAGIC
+-- MAGIC **Scenario:** There's no nightly count. You know the opening stock and every delivery, sale and shrink event. The planner needs end-of-day stock for every day.
+-- MAGIC
+-- MAGIC **Raw data:**
+-- MAGIC - `d25_opening`: on-hand at the end of Mar 8.
+-- MAGIC - `d25_events`: `item_id, event_date, qty_change (+ in, − out), event_type`.
+-- MAGIC
+-- MAGIC **Your task:** end-of-day on-hand for every day from Mar 9 to 12.
+-- MAGIC
+-- MAGIC **Hints:**
+-- MAGIC 1. Some days have no events. They still need a row.
+-- MAGIC 2. Stock on a day = opening + everything that moved up to and including that day.
+-- MAGIC 3. A window function can keep a running total.
+-- MAGIC
+-- MAGIC **Check yourself:** 4 rows; Mar 9 is 38.
 
 -- COMMAND ----------
 
