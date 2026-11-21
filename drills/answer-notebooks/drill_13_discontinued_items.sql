@@ -16,7 +16,7 @@
 -- MAGIC 1. Is a discontinue row a version, or the end of one?
 -- MAGIC 2. If you filter out discontinue rows first, what does `LEAD` see for the last real version?
 -- MAGIC
--- MAGIC **Check yourself:** 2 versions; the last ends on Apr 1.
+-- MAGIC **Check yourself:** no version covers the discontinue date or anything after it.
 
 -- COMMAND ----------
 

@@ -19,7 +19,7 @@
 -- MAGIC 2. Stock on a day = opening + everything that moved up to and including that day.
 -- MAGIC 3. A window function can keep a running total.
 -- MAGIC
--- MAGIC **Check yourself:** 4 rows; Mar 9 is 38.
+-- MAGIC **Check yourself:** one row per day, including days with no events.
 
 -- COMMAND ----------
 

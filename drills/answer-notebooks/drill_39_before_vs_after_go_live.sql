@@ -19,7 +19,7 @@
 -- MAGIC 2. Does every store have a full window?
 -- MAGIC 3. Rates: sum the parts, then divide.
 -- MAGIC
--- MAGIC **Check yourself:** only one store qualifies.
+-- MAGIC **Check yourself:** stores without all 4 weeks are excluded.
 
 -- COMMAND ----------
 

@@ -19,7 +19,7 @@
 -- MAGIC 1. Computed on-hand is drill 25.
 -- MAGIC 2. Drift carries over from one day to the next. How much of today's drift is new today?
 -- MAGIC
--- MAGIC **Check yourself:** drift on Mar 11 is −3; the loss **on** Mar 11 is smaller.
+-- MAGIC **Check yourself:** each day's unexplained loss adds up to the latest drift.
 
 -- COMMAND ----------
 

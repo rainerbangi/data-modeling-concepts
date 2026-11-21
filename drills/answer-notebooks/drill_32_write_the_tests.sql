@@ -20,7 +20,7 @@
 -- MAGIC 2. Two ranges overlap when each starts before the other ends.
 -- MAGIC 3. Compare two single-row totals; return a row only if they differ.
 -- MAGIC
--- MAGIC **Check yourself:** each test returns exactly 1 row.
+-- MAGIC **Check yourself:** each test returns at least one row on this data.
 
 -- COMMAND ----------
 

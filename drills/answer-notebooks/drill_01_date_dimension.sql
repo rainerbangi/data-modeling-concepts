@@ -26,7 +26,7 @@
 -- MAGIC 2. Check what day of the week Databricks counts as 1, and what `date_trunc('week', ...)` returns.
 -- MAGIC 3. Only one month of the year breaks the "fiscal year = calendar year" rule.
 -- MAGIC
--- MAGIC **Check yourself:** 396 rows. 2026-03-14 has week_start 2026-03-08. 2026-01-15 has fiscal_year 2025. Later drills reuse this table.
+-- MAGIC **Check yourself:** 396 rows. Spot-check one Saturday's week_start and one January date's fiscal_year against the rules. Later drills reuse this table.
 
 -- COMMAND ----------
 

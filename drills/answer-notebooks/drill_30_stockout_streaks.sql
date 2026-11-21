@@ -17,7 +17,7 @@
 -- MAGIC 2. Mark the days where the status flips from yesterday.
 -- MAGIC 3. A running count of those flips gives each streak its own number.
 -- MAGIC
--- MAGIC **Check yourself:** 3 streaks.
+-- MAGIC **Check yourself:** separate streaks come out as separate rows.
 
 -- COMMAND ----------
 

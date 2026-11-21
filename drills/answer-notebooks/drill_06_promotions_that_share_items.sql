@@ -20,7 +20,7 @@
 -- MAGIC 2. (a) and (b) are different questions; one can count a sale twice, the other can't.
 -- MAGIC 3. For (b), you want a yes/no per sale: "is there any promo that covers it?"
 -- MAGIC
--- MAGIC **Check yourself:** (b) is 19. Your (a) rows should add up to more than 19, and that's fine.
+-- MAGIC **Check yourself:** (b) is smaller than the sum of your (a) rows. Can you explain why?
 
 -- COMMAND ----------
 

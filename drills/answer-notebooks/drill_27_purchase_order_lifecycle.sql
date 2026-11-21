@@ -17,7 +17,7 @@
 -- MAGIC 2. `min` or `max` combined with `case when` picks one timestamp per step.
 -- MAGIC 3. POs still in progress must stay in the result.
 -- MAGIC
--- MAGIC **Check yourself:** 3 rows; exactly one is overdue.
+-- MAGIC **Check yourself:** one row per PO, and POs still in progress appear.
 
 -- COMMAND ----------
 

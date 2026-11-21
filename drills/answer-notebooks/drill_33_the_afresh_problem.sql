@@ -21,7 +21,7 @@
 -- MAGIC 2. A sale before capacity exists: is its capacity 0 or unknown?
 -- MAGIC 3. Capacity adds across items on a day but not across days.
 -- MAGIC
--- MAGIC **Check yourself:** both stores come out at 15.0 days of cover.
+-- MAGIC **Check yourself:** the fact has one row per store, item and day, and capacity is null (not 0) where unknown.
 
 -- COMMAND ----------
 

@@ -15,9 +15,9 @@
 -- MAGIC **Hints:**
 -- MAGIC 1. With a running period number, "last year" is simple arithmetic.
 -- MAGIC 2. Join the table to itself.
--- MAGIC 3. Going from 7.2% to 5.8% is a change of how many points? And how many percent?
+-- MAGIC 3. If a rate goes from 10% to 8%, how many points did it change? How many percent?
 -- MAGIC
--- MAGIC **Check yourself:** this year 5.8%, last year 7.2%.
+-- MAGIC **Check yourself:** your change in points and your change in percent are different numbers.
 
 -- COMMAND ----------
 

@@ -19,7 +19,7 @@
 -- MAGIC 2. Think "replace this date's data", not "add rows".
 -- MAGIC 3. Databricks can delete and insert for a date range in one atomic statement.
 -- MAGIC
--- MAGIC **Check yourself:** Mar 13 unchanged; Mar 14 has STRAW 7 and BLUE 2; identical after a second run.
+-- MAGIC **Check yourself:** running your load twice leaves the table identical.
 
 -- COMMAND ----------
 

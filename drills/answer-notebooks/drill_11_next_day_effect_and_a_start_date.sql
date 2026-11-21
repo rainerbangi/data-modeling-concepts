@@ -30,7 +30,7 @@
 -- MAGIC 2. Then it's the drill 9 and 10 steps, on the effective date.
 -- MAGIC 3. Two different saves can land on the same effective date. Check store A.
 -- MAGIC
--- MAGIC **Check yourself:** 3 versions in total.
+-- MAGIC **Check yourself:** versions never overlap or leave gaps, no two back-to-back versions have the same capacity, and nothing starts before `start_date`.
 
 -- COMMAND ----------
 

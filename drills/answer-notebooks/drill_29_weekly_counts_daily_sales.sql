@@ -19,7 +19,7 @@
 -- MAGIC 2. Which table should change grain, and which direction is safe?
 -- MAGIC 3. `d01_dim_date` already knows each date's week.
 -- MAGIC
--- MAGIC **Check yourself:** week of Mar 1 is 0.40.
+-- MAGIC **Check yourself:** one row per item per week.
 
 -- COMMAND ----------
 

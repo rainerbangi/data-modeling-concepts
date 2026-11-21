@@ -18,7 +18,7 @@
 -- MAGIC 1. You need a row for every item and day, even ones not in the file.
 -- MAGIC 2. An item missing from a file that arrived means something different from an item on a day with no file.
 -- MAGIC
--- MAGIC **Check yourself:** 8 rows; two are null, two are 0.
+-- MAGIC **Check yourself:** 8 rows, and you can explain why each empty value is 0 or null.
 
 -- COMMAND ----------
 

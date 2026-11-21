@@ -17,7 +17,7 @@
 -- MAGIC 2. Pick one row per store, item and **day**. Which one should win?
 -- MAGIC 3. "Latest row per group" has a standard window function.
 -- MAGIC
--- MAGIC **Check yourself:** 2 versions; none starts and ends on the same day.
+-- MAGIC **Check yourself:** no version starts and ends on the same day.
 
 -- COMMAND ----------
 

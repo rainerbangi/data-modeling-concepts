@@ -16,7 +16,7 @@
 -- MAGIC 1. Find the sale that appears more than once. Which copy is right?
 -- MAGIC 2. Rank copies within each `sale_id`, newest first.
 -- MAGIC
--- MAGIC **Check yourself:** 2 rows. Mar 16 is 5, not 8.
+-- MAGIC **Check yourself:** each `sale_id` is counted once.
 
 -- COMMAND ----------
 

@@ -19,7 +19,7 @@
 -- MAGIC 2. A changed item needs two actions: close the old version and open a new one. Can one `MERGE` row do both?
 -- MAGIC 3. After closing, "which items have no current version?" catches both changed and brand-new items.
 -- MAGIC
--- MAGIC **Check yourself:** STRAW has 2 rows, BLUE 1, KIWI 1. Exactly 3 rows are current.
+-- MAGIC **Check yourself:** exactly one current row per item, and unchanged items keep their original row.
 
 -- COMMAND ----------
 

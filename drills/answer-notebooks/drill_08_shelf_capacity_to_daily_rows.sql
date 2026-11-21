@@ -17,7 +17,7 @@
 -- MAGIC 2. Which versions contain a given date? Write the condition with both ends.
 -- MAGIC 3. On the day capacity changes, how many versions does your condition match?
 -- MAGIC
--- MAGIC **Check yourself:** 7 rows. Mar 15 for store A appears once, with 80.
+-- MAGIC **Check yourself:** each store, item and day appears exactly once.
 
 -- COMMAND ----------
 

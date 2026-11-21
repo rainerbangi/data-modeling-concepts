@@ -19,7 +19,7 @@
 -- MAGIC 2. Which date decides the tier: order, receipt or today?
 -- MAGIC 3. A rate is the average of a 1/0 flag.
 -- MAGIC
--- MAGIC **Check yourself:** 3 POs counted; 1 is excluded.
+-- MAGIC **Check yourself:** POs not yet received are excluded.
 
 -- COMMAND ----------
 

@@ -39,7 +39,7 @@ Before writing SQL, say out loud: (1) what one row of each raw table means, (2) 
 2. Check what day of the week Databricks counts as 1, and what `date_trunc('week', ...)` returns.
 3. Only one month of the year breaks the "fiscal year = calendar year" rule.
 
-**Check yourself:** 396 rows. 2026-03-14 has week_start 2026-03-08. 2026-01-15 has fiscal_year 2025. Later drills reuse this table.
+**Check yourself:** 396 rows. Spot-check one Saturday's week_start and one January date's fiscal_year against the rules. Later drills reuse this table.
 
 ### Drill 2: Keys that never drop rows (8 min)
 **What this tests:** surrogate keys, and protecting fact rows from missing dimension rows (orphans).
@@ -70,7 +70,7 @@ Every sale must appear, and total units must equal the source total.
 2. Data warehouses often keep one special dimension row for "we don't know which store".
 3. A hash of the business key gives the same surrogate key every time you rebuild.
 
-**Check yourself:** 4 sale rows, 11 units in total.
+**Check yourself:** every sale appears once, and total units equal the source table's total.
 
 ### Drill 3: Fix typos, keep no history (8 min)
 **What this tests:** SCD Type 1 with `MERGE`, idempotent loads, and comparing values that can be null.
@@ -102,7 +102,7 @@ as t(store_id, store_name, region);
 2. Look at store B's old region. What does `null <> 'West'` return?
 3. Only update rows that actually changed, or a rerun rewrites everything.
 
-**Check yourself:** first run: 2 updates, 1 insert. Second run: 0 rows affected.
+**Check yourself:** running your statement a second time affects 0 rows.
 
 ### Drill 4: Nightly full dump (12 min)
 **What this tests:** building SCD Type 2 from a source that only shows **current** values.
@@ -131,7 +131,7 @@ as t(item_id, category);
 2. A changed item needs two actions: close the old version and open a new one. Can one `MERGE` row do both?
 3. After closing, "which items have no current version?" catches both changed and brand-new items.
 
-**Check yourself:** STRAW has 2 rows, BLUE 1, KIWI 1. Exactly 3 rows are current.
+**Check yourself:** exactly one current row per item, and unchanged items keep their original row.
 
 ### Drill 5: One fact, two dates (8 min)
 **What this tests:** role-playing dimensions, and keeping rows whose second date isn't known yet.
@@ -156,7 +156,7 @@ as t(po_id, ordered_date, received_date, units);
 1. You need the date table twice in one query. How do you tell the two apart?
 2. One of the two dates can be null. Which join keeps that row?
 
-**Check yourself:** 3 rows; 90 units in total; one row has a null received_week.
+**Check yourself:** total units equal the source total, and POs not yet received still appear.
 
 ### Drill 6: Promotions that share items (12 min)
 **What this tests:** many-to-many relationships (bridge tables) and double counting.
@@ -189,7 +189,7 @@ as t(sale_date, item_id, units);
 2. (a) and (b) are different questions; one can count a sale twice, the other can't.
 3. For (b), you want a yes/no per sale: "is there any promo that covers it?"
 
-**Check yourself:** (b) is 19. Your (a) rows should add up to more than 19, and that's fine.
+**Check yourself:** (b) is smaller than the sum of your (a) rows. Can you explain why?
 
 ---
 
@@ -218,7 +218,7 @@ as t(item_id, price, effective_date);
 2. One window function looks at the next row in order.
 3. What does that function return for the newest price, and why is that a problem for later joins?
 
-**Check yourself:** 4 rows; no `valid_to` is null.
+**Check yourself:** one row per price change, and no `valid_to` is null.
 
 ### Drill 8: Shelf capacity to daily rows (10 min)
 **What this tests:** expanding SCD2 ranges into daily rows, and the boundary-day bug.
@@ -243,7 +243,7 @@ as t(store_id, item_id, capacity, changed_on);
 2. Which versions contain a given date? Write the condition with both ends.
 3. On the day capacity changes, how many versions does your condition match?
 
-**Check yourself:** 7 rows. Mar 15 for store A appears once, with 80.
+**Check yourself:** each store, item and day appears exactly once.
 
 ### Drill 9: Two changes on one day (10 min)
 **What this tests:** deduplicating a change log to the grain of the history (the day).
@@ -269,7 +269,7 @@ as t(store_id, item_id, capacity, change_ts);
 2. Pick one row per store, item and **day**. Which one should win?
 3. "Latest row per group" has a standard window function.
 
-**Check yourself:** 2 versions; none starts and ends on the same day.
+**Check yourself:** no version starts and ends on the same day.
 
 ### Drill 10: Changes that change nothing (10 min)
 **What this tests:** collapsing repeated values, and why step order matters.
@@ -293,7 +293,7 @@ as t(item_id, capacity, changed_on);
 1. Compare each row with the row before it.
 2. Should you remove repeats before or after you compute `valid_to`? Try both on paper.
 
-**Check yourself:** 3 versions.
+**Check yourself:** no two back-to-back versions of an item have the same capacity.
 
 ### Drill 11: Next-day effect and a start date (15 min)
 **What this tests:** applying business rules to a change log before the standard SCD2 steps; combines drills 9 and 10.
@@ -334,7 +334,7 @@ as t(store_id, item_id, capacity, start_date, change_timestamp);
 2. Then it's the drill 9 and 10 steps, on the effective date.
 3. Two different saves can land on the same effective date. Check store A.
 
-**Check yourself:** 3 versions in total.
+**Check yourself:** versions never overlap or leave gaps, no two back-to-back versions have the same capacity, and nothing starts before `start_date`.
 
 ### Drill 12: Backdated corrections (12 min)
 **What this tests:** the difference between when something **takes effect** and when it was **entered**.
@@ -360,7 +360,7 @@ as t(store_id, item_id, capacity, effective_date, entered_at);
 1. Which date orders the timeline: effective or entered?
 2. Two entries have the same effective date. Which one is the truth?
 
-**Check yourself:** 3 versions. Mar 15 and Mar 16 have different capacities.
+**Check yourself:** versions follow the effective dates, and each effective date appears once.
 
 ### Drill 13: Discontinued items (10 min)
 **What this tests:** end events in a change log, and when a `WHERE` clause runs relative to window functions.
@@ -384,7 +384,7 @@ as t(item_id, action, capacity, effective_date);
 1. Is a discontinue row a version, or the end of one?
 2. If you filter out discontinue rows first, what does `LEAD` see for the last real version?
 
-**Check yourself:** 2 versions; the last ends on Apr 1.
+**Check yourself:** no version covers the discontinue date or anything after it.
 
 ### Drill 14: Database change feed (15 min)
 **What this tests:** turning a CDC feed (insert, update, delete) into SCD2; combines drills 9, 10 and 13.
@@ -413,7 +413,7 @@ as t(op, item_id, category, commit_ts);
 2. What should a delete do to the item's history?
 3. Deletes have a null category. Which comparison handles nulls?
 
-**Check yourself:** 3 versions; KIWI's ends on Apr 1.
+**Check yourself:** no duplicate or no-op versions, and nothing is active for a deleted item after its delete.
 
 ### Drill 15: Status history, two questions (12 min)
 **What this tests:** choosing the shape from the **question**, not the table.
@@ -442,7 +442,7 @@ as t(po_id, status, status_at);
 2. (b) is about time between two steps. What if each PO were one row with a column per step?
 3. Not every PO has been received.
 
-**Check yourself:** (a) 2. (b) 5.0.
+**Check yourself:** (b) uses only POs that were received.
 
 ### Drill 16: Price on the day of sale (8 min)
 **What this tests:** point-in-time ("as-was") lookups into SCD2, the most common SCD2 query in practice.
@@ -469,7 +469,7 @@ as t(sale_id, item_id, sold_on, units);
 2. Look at the sale on Feb 15, the day the price changed.
 3. One sale happened before any price existed. Which join keeps it?
 
-**Check yourself:** 5 rows; one is flagged as unpriced.
+**Check yourself:** every sale appears exactly once, either priced or flagged.
 
 ---
 
@@ -500,7 +500,7 @@ as t(sale_id, sold_at, item_id, units, loaded_at);
 1. Find the sale that appears more than once. Which copy is right?
 2. Rank copies within each `sale_id`, newest first.
 
-**Check yourself:** 2 rows. Mar 16 is 5, not 8.
+**Check yourself:** each `sale_id` is counted once.
 
 ### Drill 18: Returns and voids (10 min)
 **What this tests:** business rules for corrections, and a classic null trap with `NOT IN`.
@@ -534,7 +534,7 @@ as t(txn_id, txn_type, ref_txn_id, sold_on, item_id, units);
 2. Try `txn_id not in (select ref_txn_id from d18_txns)`. Why does it return nothing?
 3. There's a null-safe way to say "no void points to this sale".
 
-**Check yourself:** Mar 14: 5. Mar 15: 1.
+**Check yourself:** a voided sale contributes nothing, and a return counts on its own date.
 
 ### Drill 19: A corrected file arrives (8 min)
 **What this tests:** idempotent loads: rerunning a load must not change the result.
@@ -562,7 +562,7 @@ as t(sale_date, item_id, units);
 2. Think "replace this date's data", not "add rows".
 3. Databricks can delete and insert for a date range in one atomic statement.
 
-**Check yourself:** Mar 13 unchanged; Mar 14 has STRAW 7 and BLUE 2; identical after a second run.
+**Check yourself:** running your load twice leaves the table identical.
 
 ### Drill 20: Two feeds, one fact (12 min)
 **What this tests:** combining two event sources at one grain without multiplying rows (fan-out).
@@ -593,7 +593,7 @@ as t(logged_on, store_id, item_id, units, reason);
 2. Get each feed to the output grain **before** joining.
 3. Some days exist in only one feed. Which join keeps both?
 
-**Check yourself:** 3 rows. Mar 14: 6 sold, 3 shrink.
+**Check yourself:** each column's total equals its feed's raw total, and days found in only one feed still appear.
 
 ### Drill 21: The daily file (6 min)
 **What this tests:** classifying a table correctly when it looks like something else.
@@ -618,7 +618,7 @@ as t(item_id, sale_date, units);
 1. Read one row aloud. Did something happen, or is something true?
 2. Does adding up a week of rows give a real number?
 
-**Check yourself:** 20.
+**Check yourself:** you can explain in one sentence why adding these rows is valid.
 
 ### Drill 22: Counting customers (10 min)
 **What this tests:** non-additive measures (distinct counts), the "daily vs weekly active users" trap.
@@ -644,7 +644,7 @@ as t(customer_id, sold_on, item_id, units);
 1. Add up your daily customer counts. Is that the weekly answer?
 2. Look for a customer who shopped on more than one day.
 
-**Check yourself:** daily customers add up to 3; the weekly answer is not 3.
+**Check yourself:** you can explain why the weekly number is not the sum of the daily numbers.
 
 ---
 
@@ -672,7 +672,7 @@ as t(count_date, store_id, item_id, on_hand);
 1. What does `sum(on_hand)` over all rows represent? Does it mean anything?
 2. Get the store's total per night first, then decide how to combine nights.
 
-**Check yourself:** 49.
+**Check yourself:** your answer falls between the smallest and largest nightly store total.
 
 ### Drill 24: A snapshot that skips zeros (12 min)
 **What this tests:** the meaning of a missing row: zero vs unknown.
@@ -702,7 +702,7 @@ as t(file_date, arrived);
 1. You need a row for every item and day, even ones not in the file.
 2. An item missing from a file that arrived means something different from an item on a day with no file.
 
-**Check yourself:** 8 rows; two are null, two are 0.
+**Check yourself:** 8 rows, and you can explain why each empty value is 0 or null.
 
 ### Drill 25: Stock from movements (12 min)
 **What this tests:** building a daily snapshot from events with a date spine and a running total.
@@ -731,7 +731,7 @@ as t(item_id, event_date, qty_change, event_type);
 2. Stock on a day = opening + everything that moved up to and including that day.
 3. A window function can keep a running total.
 
-**Check yourself:** 4 rows; Mar 9 is 38.
+**Check yourself:** one row per day, including days with no events.
 
 ### Drill 26: Missing snapshot days (8 min)
 **What this tests:** finding rows that **don't** exist (coverage checks).
@@ -757,7 +757,7 @@ as t(store_id, snapshot_date);
 1. You can't find a missing row by looking at the rows that exist.
 2. Build the list of rows that **should** exist, then compare.
 
-**Check yourself:** 3 missing store-days.
+**Check yourself:** every row you return is a store and day with no snapshot.
 
 ### Drill 27: Purchase order lifecycle (12 min)
 **What this tests:** the accumulating snapshot: one row per process, a column per step.
@@ -784,7 +784,7 @@ as t(po_id, status, status_at);
 2. `min` or `max` combined with `case when` picks one timestamp per step.
 3. POs still in progress must stay in the result.
 
-**Check yourself:** 3 rows; exactly one is overdue.
+**Check yourself:** one row per PO, and POs still in progress appear.
 
 ### Drill 28: On promo, no sales (10 min)
 **What this tests:** factless facts (coverage) and anti-joins.
@@ -811,7 +811,7 @@ as t(calendar_date, store_id, item_id, units);
 1. The days you want aren't in the sales table at all.
 2. Expand each promo into one row per day it ran.
 
-**Check yourself:** 2 days.
+**Check yourself:** every day you return falls inside the promo.
 
 ### Drill 29: Weekly counts, daily sales (10 min)
 **What this tests:** aligning two grains before combining them.
@@ -841,7 +841,7 @@ as t(sale_date, item_id, units);
 2. Which table should change grain, and which direction is safe?
 3. `d01_dim_date` already knows each date's week.
 
-**Check yourself:** week of Mar 1 is 0.40.
+**Check yourself:** one row per item per week.
 
 ---
 
@@ -868,7 +868,7 @@ from (select 'STRAW' as item_id, posexplode(array(5,0,0,3,0,0,0,2,0,4)) as (pos,
 2. Mark the days where the status flips from yesterday.
 3. A running count of those flips gives each streak its own number.
 
-**Check yourself:** 3 streaks.
+**Check yourself:** separate streaks come out as separate rows.
 
 ### Drill 31: Same period last year (8 min)
 **What this tests:** year-over-year comparisons, and points vs percent.
@@ -889,9 +889,9 @@ as t(store_id, fiscal_period_seq, shrink_amt, sales_amt);    -- 13 periods per y
 **Hints:**
 1. With a running period number, "last year" is simple arithmetic.
 2. Join the table to itself.
-3. Going from 7.2% to 5.8% is a change of how many points? And how many percent?
+3. If a rate goes from 10% to 8%, how many points did it change? How many percent?
 
-**Check yourself:** this year 5.8%, last year 7.2%.
+**Check yourself:** your change in points and your change in percent are different numbers.
 
 ### Drill 32: Write the tests (10 min)
 **What this tests:** data tests that pass with zero rows, the way dbt tests work.
@@ -925,7 +925,7 @@ as t(item_key, item_id, category, valid_from, valid_to);
 2. Two ranges overlap when each starts before the other ends.
 3. Compare two single-row totals; return a row only if they differ.
 
-**Check yourself:** each test returns exactly 1 row.
+**Check yourself:** each test returns at least one row on this data.
 
 ---
 
@@ -964,7 +964,7 @@ as t(sale_id, sold_at, store_id, item_id, units, loaded_at);
 2. A sale before capacity exists: is its capacity 0 or unknown?
 3. Capacity adds across items on a day but not across days.
 
-**Check yourself:** both stores come out at 15.0 days of cover.
+**Check yourself:** the fact has one row per store, item and day, and capacity is null (not 0) where unknown.
 
 ### Drill 34: Shrink by category, as-was vs as-is (20 min)
 **What this tests:** SCD2 joined to a fact, two ways, and knowing which one the business means.
@@ -995,7 +995,7 @@ as t(shrink_date, item_id, shrink_amt);
 2. As-was: join on the date. As-is: join to the current version only.
 3. Which view should each manager use, and why?
 
-**Check yourself:** both views total 20.
+**Check yourself:** both views have the same total.
 
 ### Drill 35: Revenue at the right price (25 min)
 **What this tests:** cleaning a messy price log, then pricing sales; combines drills 9, 10, 7 and 16.
@@ -1027,7 +1027,7 @@ as t(sold_on, item_id, units);
 1. Clean the log before closing versions: same-day changes, then repeats.
 2. One sale happened before any price existed.
 
-**Check yourself:** 3 months; one has null revenue and 1 unpriced unit.
+**Check yourself:** unpriced units are reported, not dropped.
 
 ### Drill 36: Counted vs computed stock (20 min)
 **What this tests:** reconciling two sources of truth, and cumulative vs daily differences.
@@ -1058,7 +1058,7 @@ as t(item_id, count_date, counted);
 1. Computed on-hand is drill 25.
 2. Drift carries over from one day to the next. How much of today's drift is new today?
 
-**Check yourself:** drift on Mar 11 is −3; the loss **on** Mar 11 is smaller.
+**Check yourself:** each day's unexplained loss adds up to the latest drift.
 
 ### Drill 37: Promo lift with overlapping promos (20 min)
 **What this tests:** comparing averages fairly: count each day once, and include days with no sales.
@@ -1088,7 +1088,7 @@ as t(sale_date, item_id, units);
 2. Days with no sales must count, as zero.
 3. Start from a list of every day, not from the sales table.
 
-**Check yourself:** 10 days in total; 8 on promo.
+**Check yourself:** on-promo days plus off-promo days equal 10.
 
 ### Drill 38: On-time delivery by supplier tier (25 min)
 **What this tests:** an accumulating snapshot plus an as-was SCD2 lookup; combines drills 27, 7 and 16.
@@ -1120,7 +1120,7 @@ as t(po_id, supplier_id, status, status_at);
 2. Which date decides the tier: order, receipt or today?
 3. A rate is the average of a 1/0 flag.
 
-**Check yourself:** 3 POs counted; 1 is excluded.
+**Check yourself:** POs not yet received are excluded.
 
 ### Drill 39: Before vs after go-live (20 min)
 **What this tests:** comparing windows relative to an event date that differs per store, and fair comparisons.
@@ -1151,7 +1151,7 @@ as t(store_id, week_start, shrink_amt, sales_amt);
 2. Does every store have a full window?
 3. Rates: sum the parts, then divide.
 
-**Check yourself:** only one store qualifies.
+**Check yourself:** stores without all 4 weeks are excluded.
 
 ### Drill 40: Full mock (45 min, talk out loud, record yourself)
 **What this tests:** everything, plus the order of your thinking. Interviewers grade the process as much as the SQL.

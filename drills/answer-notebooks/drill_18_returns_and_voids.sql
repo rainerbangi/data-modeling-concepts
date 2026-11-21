@@ -23,7 +23,7 @@
 -- MAGIC 2. Try `txn_id not in (select ref_txn_id from d18_txns)`. Why does it return nothing?
 -- MAGIC 3. There's a null-safe way to say "no void points to this sale".
 -- MAGIC
--- MAGIC **Check yourself:** Mar 14: 5. Mar 15: 1.
+-- MAGIC **Check yourself:** a voided sale contributes nothing, and a return counts on its own date.
 
 -- COMMAND ----------
 

@@ -19,7 +19,7 @@
 -- MAGIC 2. As-was: join on the date. As-is: join to the current version only.
 -- MAGIC 3. Which view should each manager use, and why?
 -- MAGIC
--- MAGIC **Check yourself:** both views total 20.
+-- MAGIC **Check yourself:** both views have the same total.
 
 -- COMMAND ----------
 

@@ -16,7 +16,7 @@
 -- MAGIC 1. Read one row aloud. Did something happen, or is something true?
 -- MAGIC 2. Does adding up a week of rows give a real number?
 -- MAGIC
--- MAGIC **Check yourself:** 20.
+-- MAGIC **Check yourself:** you can explain in one sentence why adding these rows is valid.
 
 -- COMMAND ----------
 

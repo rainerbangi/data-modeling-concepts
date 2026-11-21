@@ -18,7 +18,7 @@
 -- MAGIC 1. Add up your daily customer counts. Is that the weekly answer?
 -- MAGIC 2. Look for a customer who shopped on more than one day.
 -- MAGIC
--- MAGIC **Check yourself:** daily customers add up to 3; the weekly answer is not 3.
+-- MAGIC **Check yourself:** you can explain why the weekly number is not the sum of the daily numbers.
 
 -- COMMAND ----------
 

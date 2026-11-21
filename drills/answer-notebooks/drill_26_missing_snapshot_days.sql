@@ -16,7 +16,7 @@
 -- MAGIC 1. You can't find a missing row by looking at the rows that exist.
 -- MAGIC 2. Build the list of rows that **should** exist, then compare.
 -- MAGIC
--- MAGIC **Check yourself:** 3 missing store-days.
+-- MAGIC **Check yourself:** every row you return is a store and day with no snapshot.
 
 -- COMMAND ----------
 

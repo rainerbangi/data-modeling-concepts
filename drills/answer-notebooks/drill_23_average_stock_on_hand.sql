@@ -16,7 +16,7 @@
 -- MAGIC 1. What does `sum(on_hand)` over all rows represent? Does it mean anything?
 -- MAGIC 2. Get the store's total per night first, then decide how to combine nights.
 -- MAGIC
--- MAGIC **Check yourself:** 49.
+-- MAGIC **Check yourself:** your answer falls between the smallest and largest nightly store total.
 
 -- COMMAND ----------
 

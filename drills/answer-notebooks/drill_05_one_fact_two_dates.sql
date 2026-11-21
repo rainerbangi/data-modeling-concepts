@@ -16,7 +16,7 @@
 -- MAGIC 1. You need the date table twice in one query. How do you tell the two apart?
 -- MAGIC 2. One of the two dates can be null. Which join keeps that row?
 -- MAGIC
--- MAGIC **Check yourself:** 3 rows; 90 units in total; one row has a null received_week.
+-- MAGIC **Check yourself:** total units equal the source total, and POs not yet received still appear.
 
 -- COMMAND ----------
 

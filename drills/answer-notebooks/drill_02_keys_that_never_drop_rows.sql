@@ -23,7 +23,7 @@
 -- MAGIC 2. Data warehouses often keep one special dimension row for "we don't know which store".
 -- MAGIC 3. A hash of the business key gives the same surrogate key every time you rebuild.
 -- MAGIC
--- MAGIC **Check yourself:** 4 sale rows, 11 units in total.
+-- MAGIC **Check yourself:** every sale appears once, and total units equal the source table's total.
 
 -- COMMAND ----------
 

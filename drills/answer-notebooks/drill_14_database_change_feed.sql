@@ -17,7 +17,7 @@
 -- MAGIC 2. What should a delete do to the item's history?
 -- MAGIC 3. Deletes have a null category. Which comparison handles nulls?
 -- MAGIC
--- MAGIC **Check yourself:** 3 versions; KIWI's ends on Apr 1.
+-- MAGIC **Check yourself:** no duplicate or no-op versions, and nothing is active for a deleted item after its delete.
 
 -- COMMAND ----------
 

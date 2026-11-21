@@ -16,7 +16,7 @@
 -- MAGIC 1. Compare each row with the row before it.
 -- MAGIC 2. Should you remove repeats before or after you compute `valid_to`? Try both on paper.
 -- MAGIC
--- MAGIC **Check yourself:** 3 versions.
+-- MAGIC **Check yourself:** no two back-to-back versions of an item have the same capacity.
 
 -- COMMAND ----------
 

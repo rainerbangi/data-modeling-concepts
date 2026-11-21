@@ -17,7 +17,7 @@
 -- MAGIC 2. One window function looks at the next row in order.
 -- MAGIC 3. What does that function return for the newest price, and why is that a problem for later joins?
 -- MAGIC
--- MAGIC **Check yourself:** 4 rows; no `valid_to` is null.
+-- MAGIC **Check yourself:** one row per price change, and no `valid_to` is null.
 
 -- COMMAND ----------
 

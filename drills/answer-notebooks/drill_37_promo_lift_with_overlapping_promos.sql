@@ -19,7 +19,7 @@
 -- MAGIC 2. Days with no sales must count, as zero.
 -- MAGIC 3. Start from a list of every day, not from the sales table.
 -- MAGIC
--- MAGIC **Check yourself:** 10 days in total; 8 on promo.
+-- MAGIC **Check yourself:** on-promo days plus off-promo days equal 10.
 
 -- COMMAND ----------
 

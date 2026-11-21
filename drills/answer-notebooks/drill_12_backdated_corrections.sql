@@ -16,7 +16,7 @@
 -- MAGIC 1. Which date orders the timeline: effective or entered?
 -- MAGIC 2. Two entries have the same effective date. Which one is the truth?
 -- MAGIC
--- MAGIC **Check yourself:** 3 versions. Mar 15 and Mar 16 have different capacities.
+-- MAGIC **Check yourself:** versions follow the effective dates, and each effective date appears once.
 
 -- COMMAND ----------
 

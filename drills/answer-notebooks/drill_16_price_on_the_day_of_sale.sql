@@ -19,7 +19,7 @@
 -- MAGIC 2. Look at the sale on Feb 15, the day the price changed.
 -- MAGIC 3. One sale happened before any price existed. Which join keeps it?
 -- MAGIC
--- MAGIC **Check yourself:** 5 rows; one is flagged as unpriced.
+-- MAGIC **Check yourself:** every sale appears exactly once, either priced or flagged.
 
 -- COMMAND ----------
 

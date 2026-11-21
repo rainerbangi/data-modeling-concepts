@@ -18,7 +18,7 @@
 -- MAGIC 1. The days you want aren't in the sales table at all.
 -- MAGIC 2. Expand each promo into one row per day it ran.
 -- MAGIC
--- MAGIC **Check yourself:** 2 days.
+-- MAGIC **Check yourself:** every day you return falls inside the promo.
 
 -- COMMAND ----------
 

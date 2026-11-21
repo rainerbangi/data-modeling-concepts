@@ -18,7 +18,7 @@
 -- MAGIC 1. Clean the log before closing versions: same-day changes, then repeats.
 -- MAGIC 2. One sale happened before any price existed.
 -- MAGIC
--- MAGIC **Check yourself:** 3 months; one has null revenue and 1 unpriced unit.
+-- MAGIC **Check yourself:** unpriced units are reported, not dropped.
 
 -- COMMAND ----------
 

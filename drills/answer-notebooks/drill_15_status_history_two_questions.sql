@@ -19,7 +19,7 @@
 -- MAGIC 2. (b) is about time between two steps. What if each PO were one row with a column per step?
 -- MAGIC 3. Not every PO has been received.
 -- MAGIC
--- MAGIC **Check yourself:** (a) 2. (b) 5.0.
+-- MAGIC **Check yourself:** (b) uses only POs that were received.
 
 -- COMMAND ----------
 

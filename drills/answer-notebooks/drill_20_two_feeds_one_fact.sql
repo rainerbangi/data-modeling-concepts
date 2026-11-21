@@ -19,7 +19,7 @@
 -- MAGIC 2. Get each feed to the output grain **before** joining.
 -- MAGIC 3. Some days exist in only one feed. Which join keeps both?
 -- MAGIC
--- MAGIC **Check yourself:** 3 rows. Mar 14: 6 sold, 3 shrink.
+-- MAGIC **Check yourself:** each column's total equals its feed's raw total, and days found in only one feed still appear.
 
 -- COMMAND ----------
 

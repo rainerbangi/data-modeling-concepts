@@ -22,7 +22,7 @@
 -- MAGIC 2. Look at store B's old region. What does `null <> 'West'` return?
 -- MAGIC 3. Only update rows that actually changed, or a rerun rewrites everything.
 -- MAGIC
--- MAGIC **Check yourself:** first run: 2 updates, 1 insert. Second run: 0 rows affected.
+-- MAGIC **Check yourself:** running your statement a second time affects 0 rows.
 
 -- COMMAND ----------
 
