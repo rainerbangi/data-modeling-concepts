@@ -7,7 +7,7 @@
 | Order | Drill | Area | Pattern | Why interviewers ask it | Also covers |
 |---|---|---|---|---|---|
 | Start | 1 Date dimension | Setup | Calendar built from generated dates | Every model joins to a calendar; later drills reuse `d01_dim_date` | |
-| 1 | 17 Reloaded rows | Transaction facts | Latest row per key (`row_number`) | The most common SQL screen question | 9 |
+| 1 | 17 Reloaded rows | Transaction facts | Latest row per key (`row_number`) | The most common SQL screen question | |
 | 2 | 18 Returns and voids | Transaction facts | `not exists` vs `not in` with nulls | A classic null gotcha | |
 | 3 | 20 Two feeds, one fact | Transaction facts | Aggregate first, then full outer join | Fan-out is the core modeling mistake | 21, 29 |
 | 4 | 22 Counting customers | Measure types | Non-additive measures | The daily vs weekly active users trap | |
