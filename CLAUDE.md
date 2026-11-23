@@ -11,6 +11,7 @@ This repo trains Rainer to be a strong analytics engineer: dimensional modeling,
 | `drills/answer_key.md` | Explanations, solution SQL, expected results | The only place answers live |
 | `drills/must_do.md` | The 15 interview-priority drills | Keep in sync with drill numbers |
 | `drills/log.md` | Rainer's attempt log | Edit only when asked |
+| `drills/sql-sprint/` | Joins, subqueries and optimization sprint on one payments dataset | Answers only in its own `answer_key.md` |
 
 ## Editing drills
 
