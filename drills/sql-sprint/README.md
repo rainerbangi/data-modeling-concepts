@@ -50,8 +50,24 @@ Work top to bottom. Tick each box as you go.
 
 ## Step 4: In the interview
 
-Expect 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. For each question:
+**The hour:** about 5 minutes of introductions, 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. Finishing more stages beats perfecting one, because each stage builds on the last and the interviewer scores how far you get.
 
-1. **Confirm the rules** before writing anything.
-2. **Build in small steps** and check the totals as you go.
-3. **Think out loud** the whole time.
+**For each question:**
+
+1. **Confirm the rules first.** *"Should customers with no purchases show zero, or be left out?"*
+   Most questions hide a choice like this. Two people can write correct SQL and get different answers because they assumed different rules. Asking first shows judgment and saves you from rewriting later.
+
+2. **Say what one row means.** *"One row per customer."*
+   This is the target for your answer. If the result should have one row per customer and you see a customer twice, you know something is wrong before anyone else does.
+
+3. **Build it in small steps, checking each one.**
+   Write one piece, run it, look at it, then add the next, like testing each brick before building the wall. A mistake caught at step one takes seconds to fix; found at the end, it takes minutes you don't have.
+
+4. **Check the totals.**
+   Joining two tables can quietly copy rows. Example: one customer with two accounts and a $100 purchase becomes $200 after a careless join. A quick count or total before and after each join catches this, and it's the most common SQL mistake interviewers look for.
+
+5. **Think out loud.**
+   The interviewer can only score what they can hear. Saying *"I'm using a left join so customers with no purchases stay in"* earns credit even if the final query has a small slip. Silence earns nothing.
+
+6. **Mention speed briefly.** *"On a large table, I'd filter by date first."*
+   One sentence shows you've worked with real data volumes: reading less data is the biggest speed-up. Don't go deeper unless they ask.
