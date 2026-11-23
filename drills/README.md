@@ -7,6 +7,7 @@ About a third of them involve change logs, the gap from the Afresh interview.
 | File | What it is |
 |---|---|
 | `must_do.md` | The 15 drills to do first when preparing for an interview. |
+| `sql-sprint/` | A short sprint on joins, subqueries and query optimization, with quick-fire interview questions. |
 | `answer-notebooks/` | One notebook per drill: the brief, setup cell, your answer and a review section. |
 | `drill_bank.md` | The 40 drills: setup SQL, task, time limit. No answers. |
 | `answer_key.md` | Shape, trap, solution SQL and expected result for each drill. Open only after you finish. |
