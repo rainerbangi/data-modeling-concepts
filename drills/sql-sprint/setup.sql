@@ -35,7 +35,9 @@ select * from values
   ('T10', 'A1',                 timestamp'2026-04-01 10:00:00',  -60.00, 'posted',   'grocery'),
   ('T11', 'A4',                 timestamp'2026-03-10 08:00:00',  -20.00, 'posted',   'travel'),
   ('T12', 'A3',                 timestamp'2026-03-25 10:00:00', -500.00, 'posted',   'travel'),
-  ('T13', 'A2',                 timestamp'2026-04-02 09:00:00',  -10.00, 'posted',   'dining')
+  ('T13', 'A2',                 timestamp'2026-04-02 09:00:00',  -10.00, 'posted',   'dining'),
+  ('T14', 'A3',                 timestamp'2026-02-14 19:00:00',  -60.00, 'posted',   'grocery'),
+  ('T15', 'A4',                 timestamp'2026-01-28 12:00:00',  -30.00, 'posted',   'grocery')
 as t(txn_id, account_id, txn_ts, amount, status, category);
 
 create or replace table s_refunds as
