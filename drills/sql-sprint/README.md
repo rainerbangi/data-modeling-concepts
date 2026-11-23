@@ -1,39 +1,65 @@
-# SQL Sprint: Joins, Subqueries and Optimization
+# SQL Sprint
 
-A focused prep set for a live Karat SQL interview. Everything you need is in two notebooks.
+Prep for the OnePay Karat SQL interview: **Wednesday, Nov 25, 2:00 PM ET**.
 
-## Start here
+You only need two notebooks:
+- **`1_drills`**: where you work. Every drill has an empty cell for your answer.
+- **`2_answers`**: where you check. Open a drill's answer only after you've tried it.
 
-| Open | What it is |
-|---|---|
-| `1_drills` | Run the setup cells once, then work through the drills. Empty answer cells under each one. |
-| `2_answers` | Solutions you can run, expected results and likely follow-up questions. Open only after each drill. |
+---
 
-## The interview format (Karat)
+## Step 1: Set up (once, 5 minutes)
 
-About 60 minutes on video, in Karat Studio:
+1. In Databricks, open `drills/sql-sprint/1_drills`.
+2. Attach **Serverless** compute (top right).
+3. Run the first two code cells. They create the practice tables.
 
-| Segment | Time | What to expect | Practice with |
-|---|---|---|---|
-| Intro | ~5 min | Who you are, your current work | A 60-second pitch |
-| Discussion | ~10 min | Quick questions out loud: concepts, "what does this return?", "what's wrong with this?", "how would you speed this up?" | Part 1, O2, quick-fire questions |
-| SQL | ~40 min | One schema, several parts that get harder | Parts 2 to 4, then the M1 mock |
+---
 
-You're scored on getting through parts, clarifying assumptions and explaining your thinking. Silence costs more than a small mistake.
+## Step 2: Follow this plan
 
-## The plan
+Work top to bottom. Tick each box as you go.
 
-| When | Time | What |
-|---|---|---|
-| Mon night | 3 h | Setup. Part 1 out loud. Part 2, J1 to J8. |
-| Tue night | 3 h | Part 3, S1 to S7. Part 4, O1 and O2. Quick-fire questions out loud, timed. |
-| Wed morning | 1.5 h | M1 mock round, 40 minutes, out loud. Redo your two weakest drills. Run the Karat AV test. Stop an hour before. |
+### Monday night (about 3 hours)
 
-## In the interview, for every SQL question
+- [ ] **Part 1: Discussion warm-up** (P1 to P4, B1 to B4). Say each answer out loud before running it. 20 minutes.
+- [ ] **Part 2: Joins** (J1 to J8). About 10 minutes each.
 
-1. **Clarify:** nulls, duplicates, date boundaries, what "active" means.
+### Tuesday night (about 3 hours)
+
+- [ ] **Part 3: Subqueries and windows** (S1 to S7). About 10 minutes each.
+- [ ] **Part 4: Optimization** (O1, O2). O2 is spoken, not written.
+- [ ] **Quick-fire questions** (last cell of `1_drills`). Answer all 30 out loud, about 30 seconds each.
+
+### Wednesday morning (about 1.5 hours)
+
+- [ ] **Part 5: Mock round** (M1). 40 minutes, timer on, talking out loud the whole time.
+- [ ] Redo the **two drills you found hardest**, without notes.
+- [ ] Run Karat's **AV test** and open **Karat Studio** so nothing surprises you.
+- [ ] **Stop studying an hour before** the interview.
+
+---
+
+## Step 3: How to do each drill
+
+1. **Read** the brief: the scenario, the output it asks for, and "Clarify first" if there is one.
+2. **Start a timer** for the minutes in the drill's title.
+3. **Write your answer** in the empty cell under the drill and run it.
+4. **Stuck for 10 minutes?** Read one hint, then try again.
+5. **Check** in `2_answers` under the same drill ID (for example, J3).
+6. **Missed it?** Add it to your list for Wednesday morning.
+
+---
+
+## Step 4: In the interview
+
+For every SQL question, follow the same six moves:
+
+1. **Clarify:** "Do declined transactions count? Should customers with no activity show 0?"
 2. **Say the grain:** "One row per customer."
-3. **Build in CTEs**, one step each.
-4. **Check row counts** as you go: did a join multiply rows?
-5. **Talk while typing.**
-6. **Mention performance in one line** when relevant.
+3. **Build in steps:** one CTE per step, so each piece can be checked.
+4. **Check row counts:** did a join multiply rows?
+5. **Talk while you type:** silence costs more than a small mistake.
+6. **Mention performance in one line:** "At scale I'd filter on the raw date column so files can be skipped."
+
+**What to expect:** about 5 minutes of introductions, about 10 minutes of quick discussion questions, then about 40 minutes of SQL. The SQL is usually one schema with several parts that get harder. Getting through more parts matters more than perfecting one.
