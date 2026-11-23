@@ -1,0 +1,944 @@
+-- Databricks notebook source
+-- MAGIC %md
+-- MAGIC # 2. Answers
+-- MAGIC
+-- MAGIC Open a drill's answer only after you've tried it. Every SQL cell here runs: the tables come from the setup cells in `1_drills`.
+-- MAGIC
+-- MAGIC Each answer has: **the idea**, **the trap**, **think it through**, **SQL**, **expected**, and **follow-ups** an interviewer may ask next.
+
+-- COMMAND ----------
+
+use workspace.drills;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## Part 1: Discussion warm-up
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### P1. Three kinds of count
+-- MAGIC
+-- MAGIC **Answer:** `5, 3, 2`.
+-- MAGIC - `count(*)` counts rows: 5 customers.
+-- MAGIC - `count(referred_by)` counts non-null values: C1, C1, C9 = 3.
+-- MAGIC - `count(distinct referred_by)` counts distinct non-null values: C1, C9 = 2.
+-- MAGIC
+-- MAGIC **Say it:** "`count(*)` counts rows, `count(col)` skips nulls, `count(distinct col)` also removes repeats."
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### P2. An average with a null
+-- MAGIC
+-- MAGIC **Answer:** `15`. `avg` skips nulls, so it's (10 + 20) ÷ 2, not ÷ 3.
+-- MAGIC
+-- MAGIC **Follow-up:** "How would you treat the null as zero?" `avg(coalesce(x, 0))` gives 10. Ask first whether null really means zero here; often it means unknown.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### P3. A left join with a WHERE filter
+-- MAGIC
+-- MAGIC **Answer:** 3 rows (C1 with A1, C2 with A3, C3 with A4). Missing: C4 (no account, so `account_type` is null) and C5 (only a savings account). The `where` filter threw them out, turning the left join into an inner join.
+-- MAGIC
+-- MAGIC **Fix:** move the filter into the `on` clause.
+
+-- COMMAND ----------
+
+select c.customer_id, a.account_id
+from s_customers c
+left join s_accounts a on a.customer_id = c.customer_id
+                      and a.account_type = 'checking';
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC Now all 5 customers appear; C4 and C5 have a null `account_id`.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### P4. Division
+-- MAGIC
+-- MAGIC **Answer in Databricks:** `a = 3.5`, `b = 3`, `c = 3.5`. Databricks (Spark) returns a decimal or double for `/`. Postgres and SQL Server return **3** for `7 / 2`, because both sides are integers.
+-- MAGIC
+-- MAGIC **Say it:** "For rates I cast one side to a decimal and wrap the denominator in `nullif(..., 0)`, so the result is right in any engine and never divides by zero."
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### B1. Customers per state
+-- MAGIC
+-- MAGIC **Bug 1:** after the join, one row means one **account**, not one customer. C1 has two accounts, so NY counts C1 twice.
+-- MAGIC **Bug 2:** `count(*)` counts the null row for a customer with no account (C4), so CT shows 1 instead of 0.
+-- MAGIC
+-- MAGIC **Fix:** count distinct customers on the account side, which skips nulls.
+
+-- COMMAND ----------
+
+select c.state, count(distinct a.customer_id) as customers_with_account
+from s_customers c
+left join s_accounts a on a.customer_id = c.customer_id
+group by c.state
+order by c.state;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** CT 0, NJ 1, NY 3. (The buggy query gives CT 1, NJ 1, NY 4.)
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### B2. March by BETWEEN
+-- MAGIC
+-- MAGIC **Bug:** `'2026-03-31'` compared with a timestamp means **midnight** at the start of March 31, so every transaction later that day is missed.
+-- MAGIC
+-- MAGIC **Fix:** a half-open range.
+
+-- COMMAND ----------
+
+select sum(-amount) as march_spend
+from s_transactions
+where status = 'posted' and amount < 0
+  and txn_ts >= timestamp'2026-03-01'
+  and txn_ts <  timestamp'2026-04-01';
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** 985.00. (This data has no March 31 rows, so the buggy query happens to match here. That's exactly why this bug survives testing.)
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### B3. Grouping
+-- MAGIC
+-- MAGIC **What happens:** an error. `category` is in `select` but not in `group by` and not inside an aggregate, so the engine doesn't know which category to show for each customer.
+-- MAGIC
+-- MAGIC **Two fixes, depending on the question:**
+-- MAGIC - Spend per customer **and** category: add `t.category` to `group by` (or use `group by all`).
+-- MAGIC - Spend per customer only: remove `t.category` from `select`.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### B4. Filtering a window
+-- MAGIC
+-- MAGIC **Why it fails:** `where` runs before window functions, so `row_number()` doesn't exist yet when `where` is evaluated.
+-- MAGIC
+-- MAGIC **Fix 1:** compute it in a subquery or CTE, then filter outside.
+
+-- COMMAND ----------
+
+select account_id, txn_id, txn_ts
+from (
+  select *, row_number() over (partition by account_id order by txn_ts desc) as rn
+  from s_transactions
+)
+where rn = 1;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Fix 2:** in Databricks, Snowflake and BigQuery, `qualify` filters a window result inline: `... qualify row_number() over (...) = 1`.
+-- MAGIC
+-- MAGIC **Watch out:** two things in this data. The row with a null `account_id` forms its own group and comes back as a "latest transaction", so add `where account_id is not null` inside the subquery. And A4 has two rows at the same time, so add a tie-breaker to the `order by` (see S1).
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## Part 2: Joins
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J1. Join types: predict the rows
+-- MAGIC
+-- MAGIC **The idea:** a join's row count is the number of matching pairs, plus the unmatched rows from any side an outer join keeps.
+-- MAGIC
+-- MAGIC **Think it through:** 5 customers, 6 accounts. C1 has 2 accounts. C4 has none. A5 belongs to C6, who isn't a customer.
+-- MAGIC - **Inner:** matched pairs only: C1 ×2, C2, C3, C5 = **5**.
+-- MAGIC - **Left** (customers first): the 5 pairs plus C4 = **6**.
+-- MAGIC - **Right:** the 5 pairs plus A5 = **6**.
+-- MAGIC - **Full:** the 5 pairs plus C4 plus A5 = **7**.
+
+-- COMMAND ----------
+
+select 'inner' as join_type, count(*) as n
+from s_customers c join s_accounts a on a.customer_id = c.customer_id
+union all
+select 'left', count(*)
+from s_customers c left join s_accounts a on a.customer_id = c.customer_id
+union all
+select 'right', count(*)
+from s_customers c right join s_accounts a on a.customer_id = c.customer_id
+union all
+select 'full', count(*)
+from s_customers c full outer join s_accounts a on a.customer_id = c.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** inner 5, left 6, right 6, full 7.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"When would you use a right join?"* Rarely; I flip the tables and use a left join so the "kept" table always reads first.
+-- MAGIC - *"What's a cross join for?"* Every left row with every right row. Useful on purpose to build a grid, such as every customer × every month (S7).
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J2. Every customer's March spend
+-- MAGIC
+-- MAGIC **The idea:** a filter on the right-hand table of a left join belongs in the `ON` clause.
+-- MAGIC
+-- MAGIC **The trap:** `where t.status = 'posted'` drops C4 and C5, because after the left join their `t.status` is null, and `null = 'posted'` isn't true.
+-- MAGIC
+-- MAGIC **Think it through:**
+-- MAGIC 1. Start from customers, because everyone must appear.
+-- MAGIC 2. Left join accounts, then transactions, with every transaction filter in the transaction join's `ON`.
+-- MAGIC 3. Sum spend, and turn "no spend" into 0 with `coalesce`.
+
+-- COMMAND ----------
+
+select c.customer_id,
+       coalesce(sum(-t.amount), 0) as march_spend
+from s_customers c
+left join s_accounts a     on a.customer_id = c.customer_id
+left join s_transactions t on t.account_id  = a.account_id
+                          and t.status = 'posted'                -- filters on the right table
+                          and t.amount < 0                       --   stay in the ON clause
+                          and t.txn_ts >= timestamp'2026-03-01'
+                          and t.txn_ts <  timestamp'2026-04-01'  -- half-open month
+group by c.customer_id
+order by c.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C1 150, C2 575, C3 220, C4 0, C5 0.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"Why not `month(txn_ts) = 3`?"* It also matches March of other years, and a function on the column stops the engine from skipping files by date.
+-- MAGIC - *"Why coalesce to 0 here?"* No spend is an event that didn't happen, so zero is the truth. For something like a balance, a missing value would mean unknown, and I'd leave it null.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J3. Spend and refunds per customer
+-- MAGIC
+-- MAGIC **The idea:** when two "many" tables hang off the same parent, aggregate each one to the output grain before joining.
+-- MAGIC
+-- MAGIC **The trap:** T6 has two refunds. Joining transactions to refunds turns T6 into two rows, so its 200 is counted twice and C3's spend jumps.
+-- MAGIC
+-- MAGIC **Think it through:**
+-- MAGIC 1. Spend per customer (transactions → accounts).
+-- MAGIC 2. Refunds per customer (refunds → transactions → accounts), separately.
+-- MAGIC 3. Left join the two summaries; both are one row per customer.
+
+-- COMMAND ----------
+
+with spend as (
+  select a.customer_id, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+  group by a.customer_id
+),
+refunds as (
+  select a.customer_id, sum(r.amount) as refunded
+  from s_refunds r
+  join s_transactions t on t.txn_id = r.txn_id
+  join s_accounts a     on a.account_id = t.account_id
+  group by a.customer_id
+)
+select s.customer_id, s.spend, coalesce(r.refunded, 0) as refunded
+from spend s
+left join refunds r on r.customer_id = s.customer_id
+order by s.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C1 220 / 50, C2 635 / 0, C3 250 / 80, C6 40 / 0.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"How would you catch fan-out in production?"* A test that the output's grain is unique, plus a reconciliation test: total spend in the result equals total spend in the source.
+-- MAGIC - *"Couldn't you just use `sum(distinct ...)`?"* No. Two different transactions with the same amount would collapse into one.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J4. Accounts with no transactions
+-- MAGIC
+-- MAGIC **The idea:** "X with no Y" is an anti-join. Use `not exists` or a left join with `is null`.
+-- MAGIC
+-- MAGIC **The trap:** T9 has a null `account_id`. `x not in (list containing null)` is never true, so the `not in` version returns **no rows**.
+
+-- COMMAND ----------
+
+-- 1. not exists: null-safe, usually the clearest
+select a.account_id, a.customer_id
+from s_accounts a
+where not exists (select 1 from s_transactions t where t.account_id = a.account_id);
+
+-- 2. left join, keep the unmatched
+select a.account_id, a.customer_id
+from s_accounts a
+left join s_transactions t on t.account_id = a.account_id
+where t.txn_id is null;
+
+-- 3. not in: returns nothing because the subquery contains a null
+select account_id, customer_id
+from s_accounts
+where account_id not in (select account_id from s_transactions);
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** versions 1 and 2 return A6 (C5). Version 3 returns no rows.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"How would you make `not in` safe?"* Add `where account_id is not null` inside the subquery. But I'd rather use `not exists`.
+-- MAGIC - *"Which is fastest?"* Modern engines usually plan `not exists` and the left-join version the same way, as an anti-join. I pick `not exists` for clarity.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J5. Customers with a travel purchase
+-- MAGIC
+-- MAGIC **The idea:** "customers who have at least one Y" is a semi-join. Each customer is kept once, however many matches they have.
+-- MAGIC
+-- MAGIC **The trap:** C3 has two travel transactions (T6 and T11), so a plain join returns C3 twice. Adding `distinct` hides that and does extra work.
+
+-- COMMAND ----------
+
+select c.customer_id, c.name
+from s_customers c
+where exists (
+  select 1
+  from s_accounts a
+  join s_transactions t on t.account_id = a.account_id
+  where a.customer_id = c.customer_id
+    and t.category = 'travel'
+    and t.status = 'posted'
+)
+order by c.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C2 Ben, C3 Cara.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"`in` vs `exists`?"* Both are semi-joins and usually plan the same. `exists` handles nulls predictably and can correlate on several columns.
+-- MAGIC - *"And with a join?"* `join` plus `distinct` works but builds all the duplicates first, then removes them.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J6. Who referred whom
+-- MAGIC
+-- MAGIC **The idea:** a table that points to itself needs a self-join with two aliases, one per role.
+-- MAGIC
+-- MAGIC **The trap:** an inner self-join drops C1 and C5 (no referrer) and C4 (referrer C9 doesn't exist). In (b), `count(*)` would count 1 for a customer with no referrals.
+
+-- COMMAND ----------
+
+-- (a) each customer with their referrer's name
+select c.customer_id, c.name, r.name as referred_by_name
+from s_customers c
+left join s_customers r on r.customer_id = c.referred_by
+order by c.customer_id;
+
+-- (b) referrals made by each customer, including zero
+select r.customer_id, r.name, count(c.customer_id) as referrals
+from s_customers r
+left join s_customers c on c.referred_by = r.customer_id
+group by r.customer_id, r.name
+order by r.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** (a) C2 and C3 show "Ana"; everyone else null. (b) C1 2, everyone else 0.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"How would you find C4's broken reference?"* An anti-join: customers whose `referred_by` is not null and has no matching customer. In a pipeline, that's a relationship test.
+-- MAGIC - *"What if referrals were many levels deep?"* A recursive CTE walks the chain.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J7. Fee per transaction
+-- MAGIC
+-- MAGIC **The idea:** a range join matches a value to the band that contains it. Use `>=` and `<` so a value on a boundary fits exactly one band.
+-- MAGIC
+-- MAGIC **The trap:** T2 is exactly 100.00. `between 0 and 100` and `between 100 and 500` both match, so T2 gets two rows and two fees.
+
+-- COMMAND ----------
+
+select t.txn_id, -t.amount as debit, f.tier,
+       round(-t.amount * f.fee_pct / 100, 2) as fee
+from s_transactions t
+join s_fee_tiers f
+  on  -t.amount >= f.min_amt
+  and -t.amount <  f.max_amt
+where t.status = 'posted' and t.amount < 0
+order by t.txn_id;
+
+select sum(round(-t.amount * f.fee_pct / 100, 2)) as total_fees
+from s_transactions t
+join s_fee_tiers f on -t.amount >= f.min_amt and -t.amount < f.max_amt
+where t.status = 'posted' and t.amount < 0;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** 11 rows, one per posted debit. T2 (100.00) is tier 2, fee 0.50. T12 (500.00) is tier 3, fee 1.25. Total fees 6.20.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"Is a range join slow at scale?"* It can't use a simple hash join. With a small tier table, the engine broadcasts it, which is fine. With two big tables, bucket the ranges first or use the engine's range-join hint.
+-- MAGIC - *"Same pattern elsewhere?"* Any "value in effect on a date" lookup: an exchange rate or price history (SCD2) joined on `valid_from <= date and date < valid_to`.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### J8. March spend by current segment
+-- MAGIC
+-- MAGIC **The idea:** before joining, check that the key is unique on the side you expect to be "one".
+-- MAGIC
+-- MAGIC **The trap:** C1 has two segment rows. Joining directly matches C1's March spend to both, so 150 shows up under standard and premium.
+-- MAGIC
+-- MAGIC **Think it through:**
+-- MAGIC 1. Prove the problem: `select customer_id, count(*) from s_segments group by 1 having count(*) > 1` returns C1.
+-- MAGIC 2. Keep the latest segment per customer with `row_number`.
+-- MAGIC 3. Aggregate March spend per customer.
+-- MAGIC 4. Left join spend to the latest segment; missing segments become "unknown".
+
+-- COMMAND ----------
+
+with latest_segment as (
+  select customer_id, segment
+  from (
+    select *, row_number() over (partition by customer_id order by updated_at desc) as rn
+    from s_segments
+  )
+  where rn = 1
+),
+march_spend as (
+  select a.customer_id, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+    and t.txn_ts >= timestamp'2026-03-01' and t.txn_ts < timestamp'2026-04-01'
+  group by a.customer_id
+)
+select coalesce(s.segment, 'unknown') as segment, sum(m.spend) as spend
+from march_spend m
+left join latest_segment s on s.customer_id = m.customer_id
+group by all
+order by segment;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** premium 150, standard 795, unknown 40. Total 985, the same as total March spend.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"What if they wanted the segment at the time of each transaction?"* Turn `s_segments` into SCD2 with `lead(updated_at)` as `valid_to`, then join on the transaction date with the sandwich condition.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## Part 3: Subqueries and window functions
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S1. Latest transaction per account
+-- MAGIC
+-- MAGIC **The idea:** "latest per group" works with a correlated subquery or a window function. The window reads the table once and handles ties deliberately.
+-- MAGIC
+-- MAGIC **The trap:** A4 has two transactions at exactly the same time (T6 and T11). The correlated subquery returns both.
+
+-- COMMAND ----------
+
+-- 1. correlated subquery: logically runs once per row, and returns ties
+select t.account_id, t.txn_id, t.txn_ts
+from s_transactions t
+where t.account_id is not null
+  and t.txn_ts = (select max(t2.txn_ts)
+                  from s_transactions t2
+                  where t2.account_id = t.account_id)
+order by t.account_id, t.txn_id;
+
+-- 2. window function: one pass, exactly one row per account
+select account_id, txn_id, txn_ts
+from (
+  select *, row_number() over (partition by account_id
+                               order by txn_ts desc, abs(amount) desc) as rn  -- tie-break on purpose
+  from s_transactions
+  where account_id is not null
+)
+where rn = 1
+order by account_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** the window version returns A1 T10, A2 T13, A3 T12, A4 T6, A5 T8. The subquery version also returns T11 for A4 (6 rows).
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"Which would you use?"* The window: one scan, and the tie rule is explicit. If the business wants ties, I'd use `rank` instead of `row_number`.
+-- MAGIC - *"Why add a second sort column?"* Without it, `row_number` picks one of the tied rows unpredictably, and results can change between runs.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S2. Debits above the account's own average
+-- MAGIC
+-- MAGIC **The idea:** a window aggregate puts the group's average on every row, so you can compare without collapsing rows.
+-- MAGIC
+-- MAGIC **The trap:** filtering `where -amount > avg(...) over (...)` fails, because `where` runs before windows. Compute first, filter outside.
+
+-- COMMAND ----------
+
+select txn_id, account_id, -amount as debit, round(avg_debit, 2) as avg_debit
+from (
+  select *, avg(-amount) over (partition by account_id) as avg_debit
+  from s_transactions
+  where status = 'posted' and amount < 0 and account_id is not null
+)
+where -amount > avg_debit
+order by txn_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** T12 (500 vs 211.67), T2 (100 vs 70.00), T6 (200 vs 83.33).
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"Write it with a subquery instead."* `where -t.amount > (select avg(-t2.amount) from s_transactions t2 where t2.account_id = t.account_id and ...)`. Same result; the window computes each average once instead of per row.
+-- MAGIC - *"What's a better 'unusual' rule?"* Compare with the account's own history before this transaction (a running average with `rows between unbounded preceding and 1 preceding`), so a big purchase isn't part of its own baseline.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S3. Top category per customer, keeping ties
+-- MAGIC
+-- MAGIC **The idea:** top-N per group is a ranking window. `row_number`, `rank` and `dense_rank` differ only on ties.
+-- MAGIC
+-- MAGIC **The trap:** C1 spent 110 on grocery and 110 on dining. `row_number` keeps one of them arbitrarily.
+
+-- COMMAND ----------
+
+with cat as (
+  select a.customer_id, t.category, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+  group by all
+)
+select customer_id, category, spend
+from (
+  select *, rank() over (partition by customer_id order by spend desc) as rnk
+  from cat
+)
+where rnk = 1
+order by customer_id, category;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C1 dining 110 and grocery 110, C2 travel 500, C3 travel 220, C6 dining 40.
+-- MAGIC
+-- MAGIC | Function | Spend 110, 110, 90 |
+-- MAGIC |---|---|
+-- MAGIC | `row_number` | 1, 2, 3 |
+-- MAGIC | `rank` | 1, 1, 3 |
+-- MAGIC | `dense_rank` | 1, 1, 2 |
+-- MAGIC
+-- MAGIC **Follow-up:** *"Top 2 categories, but at most 2 rows per customer?"* `row_number() <= 2` with a tie-breaker. With `rank` or `dense_rank`, ties could return more than 2.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S4. Average March spend per active customer
+-- MAGIC
+-- MAGIC **The idea:** "average per customer" means aggregate per customer first, then average the totals.
+-- MAGIC
+-- MAGIC **The trap:** `avg(-amount)` over transactions averages **transactions** (985 ÷ 7 = 140.71), not customers.
+
+-- COMMAND ----------
+
+with per_customer as (
+  select a.customer_id, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+    and t.txn_ts >= timestamp'2026-03-01' and t.txn_ts < timestamp'2026-04-01'
+  group by a.customer_id
+)
+select round(avg(spend), 2) as avg_spend_per_customer
+from per_customer;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** 246.25 (C1 150, C2 575, C3 220, C6 40).
+-- MAGIC
+-- MAGIC **Follow-up:** *"Should inactive customers count as zero?"* That's a business question: "average per active customer" excludes them; "average per customer" includes them as zeros. Ask before writing.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S5. Customers above the average
+-- MAGIC
+-- MAGIC **The idea:** a scalar subquery returns one value and can sit in `where`. A CTE lets you reuse the per-customer step.
+
+-- COMMAND ----------
+
+with per_customer as (
+  select a.customer_id, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+    and t.txn_ts >= timestamp'2026-03-01' and t.txn_ts < timestamp'2026-04-01'
+  group by a.customer_id
+)
+select customer_id, spend
+from per_customer
+where spend > (select avg(spend) from per_customer)
+order by customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C2 575.
+-- MAGIC
+-- MAGIC **Follow-up:** *"Same thing with a window?"* Add `avg(spend) over ()` (an empty window means the whole result) and filter in an outer query.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S6. One row per customer, many measures
+-- MAGIC
+-- MAGIC **The idea:** conditional aggregation: one `group by`, with a `case` inside each aggregate. It replaces several separate queries and pivots values into columns.
+-- MAGIC
+-- MAGIC **The trap:** `sum(case when ... then x end)` returns **null** when nothing matches. Use `else 0` for spend columns. And compute the rate from the parts.
+
+-- COMMAND ----------
+
+select a.customer_id,
+       count(case when t.status = 'posted'   then 1 end)                            as posted_debits,
+       count(case when t.status = 'declined' then 1 end)                            as declined,
+       sum(case when t.status = 'posted' and t.category = 'grocery' then -t.amount else 0 end) as grocery_spend,
+       sum(case when t.status = 'posted' and t.category = 'travel'  then -t.amount else 0 end) as travel_spend,
+       round(100.0 * count(case when t.status = 'declined' then 1 end)
+                   / nullif(count(*), 0), 1)                                         as decline_rate
+from s_transactions t
+join s_accounts a on a.account_id = t.account_id
+where t.amount < 0
+group by a.customer_id
+order by a.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:**
+-- MAGIC
+-- MAGIC | customer | posted_debits | declined | grocery | travel | decline_rate |
+-- MAGIC |---|---|---|---|---|---|
+-- MAGIC | C1 | 4 | 0 | 110 | 0 | 0.0 |
+-- MAGIC | C2 | 3 | 1 | 135 | 500 | 25.0 |
+-- MAGIC | C3 | 3 | 0 | 30 | 220 | 0.0 |
+-- MAGIC | C6 | 1 | 0 | 0 | 0 | 0.0 |
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"Why `count(case ... then 1 end)`?"* `count` skips nulls, and a `case` with no `else` returns null, so it counts only matching rows. `sum(case ... then 1 else 0 end)` is equivalent.
+-- MAGIC - *"Databricks also has `count_if(status = 'declined')` and `pivot`."* Mention them as shortcuts; the `case` version works everywhere.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### S7. Month-over-month spend, with missing months
+-- MAGIC
+-- MAGIC **The idea:** to compare consecutive months, every month must exist as a row. Build a spine (every customer × every month), attach spend, then use `lag`.
+-- MAGIC
+-- MAGIC **The trap:** without the spine, C3's months are Jan and Mar only, so `lag` compares March with **January** and calls it "the previous month".
+-- MAGIC
+-- MAGIC **Think it through:**
+-- MAGIC 1. Months: generate Jan to Apr 2026.
+-- MAGIC 2. Customers: everyone with a posted debit.
+-- MAGIC 3. Spine: cross join customers × months.
+-- MAGIC 4. Monthly spend per customer.
+-- MAGIC 5. Left join spend onto the spine; no spend means 0.
+-- MAGIC 6. `lag` over each customer's months.
+
+-- COMMAND ----------
+
+with months as (
+  select explode(sequence(date'2026-01-01', date'2026-04-01', interval 1 month)) as month
+),
+customers as (
+  select distinct a.customer_id
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+),
+monthly as (
+  select a.customer_id, date_trunc('month', t.txn_ts) as month, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+  group by all
+),
+spine as (
+  select c.customer_id, m.month, coalesce(x.spend, 0) as spend
+  from customers c
+  cross join months m
+  left join monthly x on x.customer_id = c.customer_id and cast(x.month as date) = m.month
+)
+select customer_id, month, spend,
+       lag(spend) over (partition by customer_id order by month)          as prev_spend,
+       spend - lag(spend) over (partition by customer_id order by month)  as change
+from spine
+order by customer_id, month;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected (spend by month, Jan to Apr):** C1 0, 0, 150, 70. C2 0, 60, 575, 0. C3 30, 0, 220, 0. C6 0, 0, 40, 0. `change` is null only in January.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"Rolling 3-month spend?"* `sum(spend) over (partition by customer_id order by month rows between 2 preceding and current row)`, on the spine so every window is 3 real months.
+-- MAGIC - *"`rows` vs `range`?"* `rows` counts physical rows; `range` uses values, so ties (or missing dates) change what's included. On a complete spine, `rows` is safe and clear.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## Part 4: Optimization
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### O1. Fix a slow query
+-- MAGIC
+-- MAGIC **The idea:** optimization questions test whether you can **spot** waste and **explain** the cost, more than any single trick.
+-- MAGIC
+-- MAGIC **The problems:**
+-- MAGIC
+-- MAGIC | Problem | Why it hurts at 2 billion rows | Fix |
+-- MAGIC |---|---|---|
+-- MAGIC | `select *` | Columnar storage reads every column from disk | Select only the needed columns |
+-- MAGIC | `date_format(txn_ts, ...)` in `where` | A function on the column stops file skipping, so every file is read | A half-open range on the raw column |
+-- MAGIC | `upper(status)` | Same: a function on the column, evaluated on every row | Compare the stored value; clean casing once upstream |
+-- MAGIC | Refunds joined, never used | An extra join, and it duplicates T1 and T6, so any sum is wrong | Remove it |
+-- MAGIC | `in (select ... from s_accounts)` | Reads accounts a second time | Filter `account_type` in the accounts join you already have |
+-- MAGIC | No aggregation | Ships every row to the caller | Aggregate to the grain the question needs |
+-- MAGIC
+-- MAGIC **Rewrite:**
+
+-- COMMAND ----------
+
+select c.customer_id, c.name, sum(-t.amount) as march_spend
+from s_transactions t
+join s_accounts a  on a.account_id = t.account_id and a.account_type = 'checking'
+join s_customers c on c.customer_id = a.customer_id
+where t.txn_ts >= timestamp'2026-03-01' and t.txn_ts < timestamp'2026-04-01'
+  and t.status = 'posted' and t.amount < 0
+group by c.customer_id, c.name
+order by c.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C1 150, C2 575, C3 220.
+-- MAGIC
+-- MAGIC **How to prove it's faster:** `explain formatted` on both, then the query profile: files and bytes scanned (should drop sharply with the date range), rows after each join, shuffle size, spill to disk, and task time skew.
+-- MAGIC
+-- MAGIC **Follow-ups:**
+-- MAGIC - *"What would you change in the table itself?"* Cluster `transactions` on `txn_ts` (liquid clustering), so date filters skip most files. Keep file sizes healthy (compaction).
+-- MAGIC - *"The join to accounts is slow."* Accounts is small, so the engine should broadcast it. Check the plan shows a broadcast join, not a shuffle of 2 billion rows.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### O2. Talk track: "This query got slow"
+-- MAGIC
+-- MAGIC **A strong 90-second answer:**
+-- MAGIC 1. **Clarify:** "Was it sudden or gradual? What changed: data volume, code, cluster size, or the source?" Sudden usually means a code or data change; gradual usually means growth.
+-- MAGIC 2. **Look:** "I open the query profile and find the slowest step. Then I ask which bucket it's in."
+-- MAGIC 3. **Three buckets:**
+-- MAGIC    - **Reading too much:** many small files, no file skipping (a function on the filter column, wrong clustering), `select *`.
+-- MAGIC    - **Joining or shuffling too much:** fan-out from a duplicate key, joining before aggregating, a big table shuffled instead of a small one broadcast.
+-- MAGIC    - **Compute:** one task far slower than the others (skew on a hot key), or spilling to disk because memory is too small.
+-- MAGIC 4. **Fix the biggest one first**, then **measure again** and compare with the old profile.
+-- MAGIC 5. **Prevent:** a runtime alert, and row-count checks so fan-out is caught before it gets slow.
+-- MAGIC
+-- MAGIC **Say it in one line:** "Find the slow step, decide if it's reading, joining or compute, fix the biggest, measure again."
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## Part 5: Mock round
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### M1. Part 1: spend per category
+
+-- COMMAND ----------
+
+select t.category, sum(-t.amount) as spend, count(*) as debits
+from s_transactions t
+where t.status = 'posted' and t.amount < 0
+group by t.category
+order by spend desc;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** travel 720 (3), grocery 275 (5), dining 150 (3).
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### M1. Part 2: spend per state
+-- MAGIC
+-- MAGIC **Clarify:** A5's customer C6 isn't in `s_customers`. An inner join silently drops 40 of spend. Say so, and keep it visible as "unknown".
+
+-- COMMAND ----------
+
+select coalesce(c.state, 'unknown') as state, sum(-t.amount) as spend
+from s_transactions t
+join s_accounts a       on a.account_id = t.account_id
+left join s_customers c on c.customer_id = a.customer_id
+where t.status = 'posted' and t.amount < 0
+group by all
+order by spend desc;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** NJ 635, NY 470, unknown 40. Total 1,145, matching M1 Part 1.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### M1. Part 3: accounts, debits and spend per customer
+-- MAGIC
+-- MAGIC **The trap:** joining accounts and transactions then using `count(*)` for accounts counts transactions. Count distinct accounts, and keep filters in the `ON`.
+
+-- COMMAND ----------
+
+select c.customer_id,
+       count(distinct a.account_id)        as accounts,
+       count(t.txn_id)                     as posted_debits,
+       coalesce(sum(-t.amount), 0)         as spend
+from s_customers c
+left join s_accounts a     on a.customer_id = c.customer_id
+left join s_transactions t on t.account_id = a.account_id
+                          and t.status = 'posted' and t.amount < 0
+group by c.customer_id
+order by c.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C1 2 / 4 / 220, C2 1 / 3 / 635, C3 1 / 3 / 250, C4 0 / 0 / 0, C5 1 / 0 / 0.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### M1. Part 4: days from signup to first spend
+
+-- COMMAND ----------
+
+with first_spend as (
+  select a.customer_id, min(cast(t.txn_ts as date)) as first_spend_date
+  from s_transactions t
+  join s_accounts a on a.account_id = t.account_id
+  where t.status = 'posted' and t.amount < 0
+  group by a.customer_id
+)
+select c.customer_id, c.signup_date, f.first_spend_date,
+       datediff(f.first_spend_date, c.signup_date) as days_to_first_spend
+from s_customers c
+left join first_spend f on f.customer_id = c.customer_id
+order by c.customer_id;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** C1 55, C2 25, C3 **−5**, C4 null, C5 null.
+-- MAGIC
+-- MAGIC **The analysis point:** C3's first spend (T15, Jan 28) is **before** C3 signed up (Feb 2) and before account A4 was opened (Feb 3). Call it out: "That's a data quality issue, maybe a backdated transaction or a wrong signup date. I'd flag it, not silently drop it." Karat rewards noticing this.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ### M1. Part 5: rank and share within state
+
+-- COMMAND ----------
+
+with spend as (
+  select c.customer_id, c.state, sum(-t.amount) as spend
+  from s_transactions t
+  join s_accounts a  on a.account_id = t.account_id
+  join s_customers c on c.customer_id = a.customer_id
+  where t.status = 'posted' and t.amount < 0
+  group by all
+)
+select customer_id, state, spend,
+       rank() over (partition by state order by spend desc)               as state_rank,
+       round(100.0 * spend / sum(spend) over (partition by state), 1)    as pct_of_state
+from spend
+order by state, state_rank;
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC **Expected:** NJ: C2 rank 1, 100.0%. NY: C3 rank 1 (250, 53.2%), C1 rank 2 (220, 46.8%).
+-- MAGIC
+-- MAGIC **Follow-up:** *"Why `sum(spend) over (partition by state)` and not a join to a state total?"* Same result with one pass and no second query. Percent-of-total is a classic window question.
+
+-- COMMAND ----------
+
+-- MAGIC %md
+-- MAGIC ## Quick-fire answers
+-- MAGIC
+-- MAGIC 1. **Inner vs left join:** inner keeps matches only; left keeps every row from the left table, with nulls where nothing matched.
+-- MAGIC 2. **`ON` vs `WHERE` in a left join:** `ON` decides what matches; `WHERE` filters the result afterwards. A right-table filter in `WHERE` turns the left join into an inner join.
+-- MAGIC 3. **Semi-join vs anti-join:** semi keeps left rows that have a match (`exists`); anti keeps those that don't (`not exists`). Neither duplicates rows.
+-- MAGIC 4. **Why avoid `not in` with a subquery:** if the subquery returns any null, the result is empty.
+-- MAGIC 5. **`union` vs `union all`:** `union` removes duplicates, which costs a sort or hash; `union all` keeps everything. Default to `union all`.
+-- MAGIC 6. **`where` vs `having`:** `where` filters rows before grouping; `having` filters groups after.
+-- MAGIC 7. **Correlated subquery:** an inner query that refers to the outer row, so it logically runs once per row. Often better as a join or a window.
+-- MAGIC 8. **CTE vs subquery vs temp table:** CTEs and subqueries usually run the same; CTEs read top-down and can be reused within the query. A temp table stores the result for reuse across queries.
+-- MAGIC 9. **Window function vs `group by`:** `group by` collapses rows; a window adds the aggregate to each row and keeps them all.
+-- MAGIC 10. **`row_number` vs `rank` vs `dense_rank`:** on ties: always unique; tied with gaps after; tied with no gaps.
+-- MAGIC 11. **`count(*)` vs `count(col)` vs `count(distinct col)`:** all rows; non-null values; distinct non-null values.
+-- MAGIC 12. **Nulls in aggregates:** `sum`, `avg`, `min`, `max` and `count(col)` skip nulls. `avg` of 10, null, 20 is 15.
+-- MAGIC 13. **`null = null`:** not true (it's unknown). Use `is null`, or null-safe `<=>` / `is not distinct from`.
+-- MAGIC 14. **Fan-out:** a one-to-many join repeats rows from the "one" side and inflates its sums. Aggregate before joining, and test the grain.
+-- MAGIC 15. **Order of execution:** from and joins, where, group by, having, window functions, select, distinct, order by, limit.
+-- MAGIC 16. **A query got slow:** see O2. Find the slow step; is it reading, joining or compute; fix the biggest; measure again.
+-- MAGIC 17. **Indexes vs partitioning vs clustering:** OLTP databases use indexes to find rows. Warehouses skip files using stats, partitions and clustering (liquid clustering, Z-order) on columns you filter by.
+-- MAGIC 18. **Predicate pushdown:** the engine applies filters as early as possible, even while reading files. A function on the column can block it.
+-- MAGIC 19. **Broadcast join:** a small table is copied to every worker, so the big table doesn't shuffle.
+-- MAGIC 20. **Skew:** one key has far more rows than others, so one task runs much longer. Fix with adaptive query execution, salting the hot key, or handling it separately.
+-- MAGIC 21. **`select *` in a warehouse:** storage is columnar, so every extra column is extra data read.
+-- MAGIC 22. **Normalization vs denormalization:** normalized (3NF) avoids duplicated data and suits writes (OLTP). Denormalized (star schema, wide tables) suits reads and analytics (OLAP).
+-- MAGIC 23. **OLTP vs OLAP:** many small reads and writes of single rows vs large scans and aggregations.
+-- MAGIC 24. **Deduplicating:** define the key and which copy wins, then `row_number() over (partition by key order by loaded_at desc)` and keep 1.
+-- MAGIC 25. **Modern SQL you use:** CTEs, window functions with frames, `qualify`, `group by all`, `merge`, `pivot`, arrays and structs with `explode`, `count_if`.
+-- MAGIC 26. **ACID:** Atomicity (all or nothing), Consistency (rules always hold), Isolation (concurrent transactions don't see each other's half-done work), Durability (committed data survives a crash). Delta Lake brings ACID to tables in a data lake.
+-- MAGIC 27. **Primary key vs foreign key:** a primary key uniquely identifies a row; a foreign key points to another table's primary key. In warehouses they're often informational (not enforced), so you test them instead.
+-- MAGIC 28. **View vs materialized view vs table:** a view stores the query and runs it each time; a materialized view stores the result and refreshes it; a table stores data you load.
+-- MAGIC 29. **Relational vs NoSQL:** relational for structured data, joins and strong consistency (payments, ledgers); NoSQL for flexible schemas, huge write volume or simple key lookups at scale.
+-- MAGIC 30. **Star vs snowflake schema:** a star has facts joined to flat dimensions (fewer joins, faster to query); a snowflake normalizes dimensions into more tables (less duplication, more joins).
