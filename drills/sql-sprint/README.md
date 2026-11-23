@@ -42,24 +42,16 @@ Work top to bottom. Tick each box as you go.
 
 ## Step 3: How to do each drill
 
-1. **Read** what's being asked.
-2. **Set a timer** for the minutes shown.
-3. **Write and run** your answer in the empty cell.
-4. **Stuck after 10 minutes?** Read one hint.
-5. **Check** your answer in `2_answers` (same drill number).
-6. **Note any misses** to redo Wednesday morning.
+1. **Set a timer** and write your answer in the empty cell.
+2. **Stuck?** Read one hint.
+3. **Check** it in `2_answers`, and note any misses for Wednesday.
 
 ---
 
 ## Step 4: In the interview
 
-**The hour:** about 5 minutes of introductions, 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. Finishing more stages beats perfecting one.
+Expect 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. For each question:
 
-**For each question:**
-
-1. **Confirm the rules first.** "Should customers with no purchases show zero?"
-2. **Say what one row means.** "One row per customer."
-3. **Build it in small steps,** checking each one.
-4. **Check the totals.** A wrong join quietly duplicates rows.
-5. **Think out loud.** Silence costs more than a small mistake.
-6. **Mention speed briefly.** "On a large table, I'd filter by date first."
+1. **Confirm the rules** before writing anything.
+2. **Build in small steps** and check the totals as you go.
+3. **Think out loud** the whole time.
