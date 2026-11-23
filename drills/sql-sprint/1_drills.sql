@@ -1,12 +1,24 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC # SQL Sprint: Joins, Subqueries and Optimization
+-- MAGIC # 1. Drills: joins, subqueries and optimization
 -- MAGIC
--- MAGIC One payments dataset, five parts that mirror a Karat SQL interview. For each drill: start a timer, write your answer in the blank cell below it, run it, then check `answer_key.md`.
+-- MAGIC **How to use this notebook**
+-- MAGIC 1. Run the next two cells once. They create the practice tables.
+-- MAGIC 2. Work down the parts in order. For each drill: start a timer, write your answer in the empty cell under it, run it.
+-- MAGIC 3. Check yourself in the `2_answers` notebook, under the same drill ID.
 -- MAGIC
--- MAGIC **Spend** means posted debits (`status = 'posted'` and `amount < 0`), shown as a positive number.
+-- MAGIC **Spend** always means posted debits (`status = 'posted'` and `amount < 0`), shown as a positive number.
 -- MAGIC
--- MAGIC Run the next two cells first.
+-- MAGIC ## The dataset
+-- MAGIC
+-- MAGIC | Table | One row means | Watch for |
+-- MAGIC |---|---|---|
+-- MAGIC | `s_customers` | a customer; `referred_by` points to another customer | a referrer that doesn't exist |
+-- MAGIC | `s_accounts` | an account owned by a customer | a customer with two accounts, one with none, an account whose customer is missing |
+-- MAGIC | `s_transactions` | a transaction; a negative amount is money out | declined and pending rows, a null `account_id`, two rows with the same timestamp, a customer with a month of no spend |
+-- MAGIC | `s_refunds` | a refund of a transaction | one transaction refunded twice |
+-- MAGIC | `s_fee_tiers` | a fee band (`min_amt` included, `max_amt` excluded) | a debit exactly on a boundary |
+-- MAGIC | `s_segments` | a segment change for a customer | a customer with two rows |
 
 -- COMMAND ----------
 
@@ -716,4 +728,35 @@ as t(customer_id, segment, updated_at);
 -- MAGIC %md
 -- MAGIC ## Quick-fire questions
 -- MAGIC
--- MAGIC Answer the 30 questions in `README.md` out loud, about 30 seconds each. Answers are at the end of `answer_key.md`.
+-- MAGIC Answer each in two or three sentences, out loud, in under 30 seconds. Answers are at the end of the `2_answers` notebook. Questions 26 to 30 come up often in Karat's discussion segment.
+-- MAGIC
+-- MAGIC 1. What's the difference between an inner and a left join?
+-- MAGIC 2. What changes if a filter on the right table moves from `ON` to `WHERE` in a left join?
+-- MAGIC 3. What are a semi-join and an anti-join? How do you write them?
+-- MAGIC 4. Why avoid `not in` with a subquery?
+-- MAGIC 5. `union` vs `union all`?
+-- MAGIC 6. `where` vs `having`?
+-- MAGIC 7. What is a correlated subquery, and when would you replace it?
+-- MAGIC 8. CTE vs subquery vs temp table?
+-- MAGIC 9. Window function vs `group by`?
+-- MAGIC 10. `row_number` vs `rank` vs `dense_rank`?
+-- MAGIC 11. `count(*)` vs `count(col)` vs `count(distinct col)`?
+-- MAGIC 12. How do aggregates treat nulls?
+-- MAGIC 13. Is `null = null` true?
+-- MAGIC 14. What is fan-out, and how do you prevent it?
+-- MAGIC 15. In what order does SQL run its clauses?
+-- MAGIC 16. A query got slow. How do you narrow down the cause?
+-- MAGIC 17. Indexes vs partitioning vs clustering?
+-- MAGIC 18. What is predicate pushdown?
+-- MAGIC 19. What is a broadcast join?
+-- MAGIC 20. What is data skew, and how do you handle it?
+-- MAGIC 21. Why is `select *` bad in a warehouse?
+-- MAGIC 22. Normalization vs denormalization?
+-- MAGIC 23. OLTP vs OLAP?
+-- MAGIC 24. How do you deduplicate a table?
+-- MAGIC 25. Which modern SQL features do you use?
+-- MAGIC 26. What does ACID mean?
+-- MAGIC 27. Primary key vs foreign key? Are they enforced in a warehouse?
+-- MAGIC 28. View vs materialized view vs table?
+-- MAGIC 29. When would you choose a relational database over NoSQL?
+-- MAGIC 30. Star schema vs snowflake schema?
