@@ -42,24 +42,32 @@ Work top to bottom. Tick each box as you go.
 
 ## Step 3: How to do each drill
 
-1. **Read** the brief: the scenario, the output it asks for, and "Clarify first" if there is one.
-2. **Start a timer** for the minutes in the drill's title.
-3. **Write your answer** in the empty cell under the drill and run it.
-4. **Stuck for 10 minutes?** Read one hint, then try again.
-5. **Check** in `2_answers` under the same drill ID (for example, J3).
-6. **Missed it?** Add it to your list for Wednesday morning.
+1. **Set a timer** and write your answer in the empty cell.
+2. **Stuck?** Read one hint.
+3. **Check** it in `2_answers`, and note any misses for Wednesday.
 
 ---
 
 ## Step 4: In the interview
 
-For every SQL question, follow the same six moves:
+**The hour:** about 5 minutes of introductions, 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. Finishing more stages beats perfecting one, because each stage builds on the last and the interviewer scores how far you get.
 
-1. **Clarify:** "Do declined transactions count? Should customers with no activity show 0?"
-2. **Say the grain:** "One row per customer."
-3. **Build in steps:** one CTE per step, so each piece can be checked.
-4. **Check row counts:** did a join multiply rows?
-5. **Talk while you type:** silence costs more than a small mistake.
-6. **Mention performance in one line:** "At scale I'd filter on the raw date column so files can be skipped."
+**For each question:**
 
-**What to expect:** about 5 minutes of introductions, about 10 minutes of quick discussion questions, then about 40 minutes of SQL. The SQL is usually one schema with several parts that get harder. Getting through more parts matters more than perfecting one.
+1. **Confirm the rules first.** *"Should customers with no purchases show zero, or be left out?"*
+   Most questions hide a choice like this. Two people can write correct SQL and get different answers because they assumed different rules. Asking first shows judgment and saves you from rewriting later.
+
+2. **Say what one row means.** *"One row per customer."*
+   This is the target for your answer. If the result should have one row per customer and you see a customer twice, you know something is wrong before anyone else does.
+
+3. **Build it in small steps, checking each one.**
+   Write one piece, run it, look at it, then add the next, like testing each brick before building the wall. A mistake caught at step one takes seconds to fix; found at the end, it takes minutes you don't have.
+
+4. **Check the totals.**
+   Joining two tables can quietly copy rows. Example: one customer with two accounts and a $100 purchase becomes $200 after a careless join. A quick count or total before and after each join catches this, and it's the most common SQL mistake interviewers look for.
+
+5. **Think out loud.**
+   The interviewer can only score what they can hear. Saying *"I'm using a left join so customers with no purchases stay in"* earns credit even if the final query has a small slip. Silence earns nothing.
+
+6. **Mention speed briefly.** *"On a large table, I'd filter by date first."*
+   One sentence shows you've worked with real data volumes: reading less data is the biggest speed-up. Don't go deeper unless they ask.
