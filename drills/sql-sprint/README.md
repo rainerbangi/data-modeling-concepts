@@ -11,6 +11,8 @@ Karat Studio offers **PostgreSQL** and MySQL, with no tables loaded. You'll crea
 | `cheatsheet.md` | Databricks habit on the left, Postgres on the right. Keep it open in the interview (tell the interviewer first) |
 | `progress.md` | Your tracker: one line per attempt, plus a redo list |
 
+**In one sentence:** practice each drill in Karat Studio, check it, log it, and on Wednesday follow the play-by-play at the bottom of this page.
+
 ---
 
 ## Step 1: Set up (once, 5 minutes)
@@ -72,3 +74,34 @@ Karat Studio offers **PostgreSQL** and MySQL, with no tables loaded. You'll crea
 
 6. **Mention speed briefly.** *"On a large table, I'd filter by date first."*
    One sentence shows you've worked with real data volumes: reading less data is the biggest speed-up. Don't go deeper unless they ask.
+
+---
+
+## Step 5: Interview day, play by play
+
+### Before the call
+
+| When | What to do | Why |
+|---|---|---|
+| 60 min before | Stop studying. Eat, water, bathroom. | A rested brain beats one more drill. |
+| 30 min before | Open Karat Studio, choose **PostgreSQL**, run a tiny test (`select 1;`). Open `cheatsheet.md` in another tab. | No surprises with the tool or the language. |
+| 10 min before | Headphones on, camera and mic checked, phone silent. Read "the 5 that will bite you" once. | You start calm, with the traps fresh in mind. |
+
+### During the hour
+
+| Minutes | What happens | What you do |
+|---|---|---|
+| 0 to 5 | **Introductions** | Give your 60-second pitch: who you are, what you build, why this role. Then say: *"I'll be using PostgreSQL. Is it OK if I keep a syntax cheatsheet open?"* |
+| 5 to 15 | **Quick questions** | Short answers out loud, about 30 seconds each, like the quick-fire drills. If you don't know, say how you'd find out. |
+| 15 to 55 | **The SQL problem**, in stages that get harder | For each stage: confirm the rules, say what one row means, build in small steps, check totals, think out loud (Step 4). |
+| 55 to 60 | **Your questions** | Ask one: *"What does the analytics team's work look like day to day?"* |
+
+### If something goes wrong
+
+| Situation | What to say or do |
+|---|---|
+| You get an error | Read it out loud, then fix it. Most are syntax from the cheatsheet: `qualify`, `date_add`, `datediff`, `5 / 2`. |
+| You're stuck | *"Let me write the simple version first, then improve it."* A working simple answer beats an unfinished perfect one. |
+| You forget syntax | *"I'll check the docs for this one."* Karat allows it if you say so. |
+| A result looks wrong | Count rows: `select count(*) from ...`. A wrong join usually shows up as too many rows. |
+| Time is running out | Describe the rest out loud: *"Next I'd add a window function to rank them."* You get credit for the plan. |
