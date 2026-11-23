@@ -68,7 +68,7 @@ Karat Studio rebuilds the tables on every run, so keep the setup at the top of t
 1. **Confirm the rules.** *"Should users with no purchases show zero, or be left out?"* Two correct queries can give different answers if they assume different rules. Ask first.
 2. **Say what one row means.** *"One row per user."* That's your target. A user appearing twice tells you something's wrong.
 3. **Build in small steps.** One CTE at a time: run it, look at it. A mistake caught early takes seconds to fix.
-4. **Check the totals.** A careless join quietly copies rows (see "A result looks wrong" below).
+4. **Check the totals.** A careless join quietly copies rows.
 5. **Think out loud.** *"I'm using a left join so users with no purchases stay in."* The interviewer can only score what they hear.
 6. **Mention speed in one line.** *"On a large table, I'd index `user_id` and filter by date first."* Go deeper only if asked.
 
@@ -79,33 +79,5 @@ Karat Studio rebuilds the tables on every run, so keep the setup at the top of t
 | An error | Read it out loud. Most are Databricks habits: `qualify`, `date_add`, `datediff`, `5 / 2`. Check the cheatsheet. |
 | Stuck | *"Let me write the simple version first."* A working simple answer beats an unfinished perfect one. |
 | Forgot syntax | *"I'll check the docs for this."* Karat allows it if you say so. |
-| A result looks wrong | Almost always a join copied rows. Run the three checks below. |
+| A result looks wrong | Almost always a join copied rows. Count rows before and after each join (the three checks are under J2 in `2_answers.md`). |
 | Running out of time | Say the rest out loud: *"Next I'd rank them with a window function."* You get credit for the plan. |
-
-### A result looks wrong: three checks
-
-**1. Do the rows match what one row should mean?** If the answer is "one row per user", these two numbers must be equal:
-```sql
-select count(*) as total_rows, count(distinct user_id) as users
-from ( /* your query, without the final semicolon */ ) q;
-```
-More rows than users means a join copied some users.
-
-**2. Which join did it?** Count rows after each step. The count jumps at the join that copies. Example from drill J2:
-
-| Step | Rows | What it means |
-|---|---|---|
-| transactions | 7 | one row per transaction |
-| + accounts | 7 | still one per transaction: each belongs to one account. Fine |
-| + refunds | 8 | transaction 6 has 2 refunds, so it now appears **twice** |
-
-**3. Does a total match the source table?** Compare with the raw sum:
-```sql
-select sum(-amount) from transactions where status = 'posted' and amount < 0;   -- 955
-```
-In J2, summing spend after joining refunds gives 1,155: transaction 6's 200 was counted twice.
-
-**How to fix it:**
-- **Aggregate first, then join.** Total refunds per user in their own CTE, then join that one row per user.
-- **Deduplicate the lookup table.** Keep one row per key with `row_number()` or `distinct on`.
-- **Check the join condition.** A missing column in `on` matches far too many rows.

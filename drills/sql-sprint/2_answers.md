@@ -173,6 +173,34 @@ order by s.user_id;
 
 **Follow-up:** *"How would you catch this in production?"* A test that each output key appears once, and a reconciliation test: the total in the result equals the total in the source.
 
+#### A result looks wrong: three checks
+
+**1. Do the rows match what one row should mean?** If the answer is "one row per user", these two numbers must be equal:
+```sql
+select count(*) as total_rows, count(distinct user_id) as users
+from ( /* your query, without the final semicolon */ ) q;
+```
+More rows than users means a join copied some users.
+
+**2. Which join did it?** Count rows after each step. The count jumps at the join that copies. Example from drill J2:
+
+| Step | Rows | What it means |
+|---|---|---|
+| transactions | 7 | one row per transaction |
+| + accounts | 7 | still one per transaction: each belongs to one account. Fine |
+| + refunds | 8 | transaction 6 has 2 refunds, so it now appears **twice** |
+
+**3. Does a total match the source table?** Compare with the raw sum:
+```sql
+select sum(-amount) from transactions where status = 'posted' and amount < 0;   -- 955
+```
+In J2, summing spend after joining refunds gives 1,155: transaction 6's 200 was counted twice.
+
+**How to fix it:**
+- **Aggregate first, then join.** Total refunds per user in their own CTE, then join that one row per user.
+- **Deduplicate the lookup table.** Keep one row per key with `row_number()` or `distinct on`.
+- **Check the join condition.** A missing column in `on` matches far too many rows.
+
 ### J3. Users with no activity, users with travel
 
 ```sql
