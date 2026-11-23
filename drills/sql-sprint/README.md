@@ -1,50 +1,51 @@
-# SQL Sprint
+# SQL Sprint (PostgreSQL)
 
 Prep for the OnePay Karat SQL interview: **Wednesday, Nov 25, 2:00 PM ET**.
 
-You only need two notebooks:
-- **`1_drills`**: where you work. Every drill has an empty cell for your answer.
-- **`2_answers`**: where you check. Open a drill's answer only after you've tried it.
+Karat Studio offers **PostgreSQL** and MySQL, with no tables loaded. You'll create your own tables and write Postgres syntax, so these drills are in Postgres.
+
+| File | What it's for |
+|---|---|
+| `1_drills.md` | The drills. Each has a setup script to paste, the task and hints |
+| `2_answers.md` | Tested answers and follow-up questions. Open after each drill |
+| `cheatsheet.md` | Databricks habit on the left, Postgres on the right. Keep it open in the interview (tell the interviewer first) |
+| `progress.md` | Your tracker: one line per attempt, plus a redo list |
 
 ---
 
 ## Step 1: Set up (once, 5 minutes)
 
-1. In Databricks, open `drills/sql-sprint/1_drills`.
-2. Attach **Serverless** compute (top right).
-3. Run the first two code cells. They create the practice tables.
+1. Open your Karat **interview dashboard** and launch the **Karat Studio** practice environment.
+2. Choose **PostgreSQL**.
+3. For each drill, paste its **Setup** at the top of the editor and write your query under it. Studio rebuilds the tables on every run, so keep the setup in place.
 
 ---
 
 ## Step 2: Follow this plan
 
-Work top to bottom. Tick each box as you go.
-
 ### Monday night (about 3 hours)
-
-- [ ] **Part 1: Discussion warm-up** (P1 to P4, B1 to B4). Say each answer out loud before running it. 20 minutes.
-- [ ] **Part 2: Joins** (J1 to J8). About 10 minutes each.
+- [ ] Skim `cheatsheet.md`, especially "the 5 that will bite you". 10 minutes.
+- [ ] **Part 1: Read it first** (R1 to R8). Say each answer out loud before running it.
+- [ ] **Part 2: Joins** (J1 to J5).
 
 ### Tuesday night (about 3 hours)
-
-- [ ] **Part 3: Subqueries and windows** (S1 to S7). About 10 minutes each.
-- [ ] **Part 4: Optimization** (O1, O2). O2 is spoken, not written.
-- [ ] **Quick-fire questions** (last cell of `1_drills`). Answer all 30 out loud, about 30 seconds each.
+- [ ] **Part 3: Aggregation** (A1 to A3).
+- [ ] **Part 4: Window functions** (W1 to W7).
+- [ ] **Part 5: Modeling and performance** (D1, O1, O2).
+- [ ] **Quick-fire questions** (end of `1_drills.md`), out loud.
 
 ### Wednesday morning (about 1.5 hours)
-
-- [ ] **Part 5: Mock round** (M1). 40 minutes, timer on, talking out loud the whole time.
-- [ ] Redo the **two drills you found hardest**, without notes.
-- [ ] Run Karat's **AV test** and open **Karat Studio** so nothing surprises you.
-- [ ] **Stop studying an hour before** the interview.
+- [ ] **Part 6: Mock round** (M1). 40 minutes, timer on, out loud.
+- [ ] Redo everything on your **redo list** in `progress.md`.
+- [ ] Run Karat's **AV test**. Stop studying an hour before.
 
 ---
 
 ## Step 3: How to do each drill
 
-1. **Set a timer** and write your answer in the empty cell.
+1. **Set a timer** and write your answer under the setup.
 2. **Stuck?** Read one hint.
-3. **Check** it in `2_answers`, and note any misses for Wednesday.
+3. **Check** it in `2_answers.md`, then **log it** in `progress.md`.
 
 ---
 
