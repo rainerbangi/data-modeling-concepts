@@ -1,9 +1,8 @@
 # Progress
 
-Fill in one row after each attempt. Edit this file in GitHub (pencil icon) or in Databricks, then commit.
+One row per drill. Edit in GitHub (pencil icon) and commit.
 
-**Result:** Pass = correct result, within the time, and you can explain the trap. Otherwise Fail.
-**Done:** one Pass. Any Fail goes on the Wednesday redo list.
+**Pass** = correct, within the target time, and you can explain the trap. Anything else is **Fail**: add it to the redo list at the bottom.
 
 | Drill | Topic | Target (min) | Date | My time (min) | Result | What I missed |
 |---|---|---|---|---|---|---|
@@ -36,18 +35,7 @@ Fill in one row after each attempt. Edit this file in GitHub (pencil icon) or in
 | M1 | mock round, 5 parts | 40 | | | | |
 | QF | 30 quick-fire questions | 15 | | | | |
 
-## Scorecard
+## Redo list (for Wednesday morning)
 
-Update after each session.
-
-| Part | Drills | Passed | Notes |
-|---|---|---|---|
-| 1. Read it first | 8 | | |
-| 2. Joins | 5 | | |
-| 3. Aggregation | 3 | | |
-| 4. Windows | 7 | | |
-| 5. Modeling and performance | 3 | | |
-| 6. Mock round | 1 | | |
-
-**Wednesday redo list:**
+Add every drill marked Fail:
 -

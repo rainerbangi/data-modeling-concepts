@@ -1,107 +1,111 @@
 # SQL Sprint (PostgreSQL)
 
-Prep for the OnePay Karat SQL interview: **Wednesday, Nov 25, 2:00 PM ET**.
+**Interview:** Wednesday, Nov 25, 2:00 PM ET · Karat Studio · PostgreSQL
 
-Karat Studio offers **PostgreSQL** and MySQL, with no tables loaded. You'll create your own tables and write Postgres syntax, so these drills are in Postgres.
-
-| File | What it's for |
+| File | Use it to |
 |---|---|
-| `1_drills.md` | The drills. Each has a setup script to paste, the task and hints |
-| `2_answers.md` | Tested answers and follow-up questions. Open after each drill |
-| `cheatsheet.md` | Databricks habit on the left, Postgres on the right. Keep it open in the interview (tell the interviewer first) |
-| `progress.md` | Your tracker: one line per attempt, plus a redo list |
-
-**In one sentence:** practice each drill in Karat Studio, check it, log it, and on Wednesday follow the play-by-play at the bottom of this page.
+| `1_drills.md` | Practice. Each drill has a setup to paste, a task and hints |
+| `2_answers.md` | Check your answer after each drill |
+| `cheatsheet.md` | Translate Databricks habits to Postgres. Keep it open in the interview |
+| `progress.md` | Log each attempt and build your redo list |
 
 ---
 
-## Step 1: Set up (once, 5 minutes)
+## 1. Set up (once)
 
-1. Open your Karat **interview dashboard** and launch the **Karat Studio** practice environment.
-2. Choose **PostgreSQL**.
-3. For each drill, paste its **Setup** at the top of the editor and write your query under it. Studio rebuilds the tables on every run, so keep the setup in place.
+Open your Karat dashboard, launch **Karat Studio**, choose **PostgreSQL**.
 
 ---
 
-## Step 2: Follow this plan
+## 2. Plan
 
-### Monday night (about 3 hours)
-- [ ] Skim `cheatsheet.md`, especially "the 5 that will bite you". 10 minutes.
-- [ ] **Part 1: Read it first** (R1 to R8). Say each answer out loud before running it.
-- [ ] **Part 2: Joins** (J1 to J5).
+**Monday night**
+- [ ] Read "the 5 that will bite you" at the top of `cheatsheet.md`
+- [ ] Part 1: Read it first (R1 to R8)
+- [ ] Part 2: Joins (J1 to J5)
 
-### Tuesday night (about 3 hours)
-- [ ] **Part 3: Aggregation** (A1 to A3).
-- [ ] **Part 4: Window functions** (W1 to W7).
-- [ ] **Part 5: Modeling and performance** (D1, O1, O2).
-- [ ] **Quick-fire questions** (end of `1_drills.md`), out loud.
+**Tuesday night**
+- [ ] Part 3: Aggregation (A1 to A3)
+- [ ] Part 4: Window functions (W1 to W7)
+- [ ] Part 5: Modeling and performance (D1, O1, O2)
+- [ ] Quick-fire questions, out loud
 
-### Wednesday morning (about 1.5 hours)
-- [ ] **Part 6: Mock round** (M1). 40 minutes, timer on, out loud.
-- [ ] Redo everything on your **redo list** in `progress.md`.
-- [ ] Run Karat's **AV test**. Stop studying an hour before.
-
----
-
-## Step 3: How to do each drill
-
-1. **Set a timer** and write your answer under the setup.
-2. **Stuck?** Read one hint.
-3. **Check** it in `2_answers.md`, then **log it** in `progress.md`.
+**Wednesday morning**
+- [ ] Part 6: Mock round (M1), 40 minutes, out loud
+- [ ] Your redo list in `progress.md`
 
 ---
 
-## Step 4: In the interview
+## 3. Each drill
 
-**The hour:** about 5 minutes of introductions, 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. Finishing more stages beats perfecting one, because each stage builds on the last and the interviewer scores how far you get.
+**Paste the setup → set a timer → write your query below it → one hint if stuck → check `2_answers.md` → log it in `progress.md`.**
 
-**For each question:**
-
-1. **Confirm the rules first.** *"Should customers with no purchases show zero, or be left out?"*
-   Most questions hide a choice like this. Two people can write correct SQL and get different answers because they assumed different rules. Asking first shows judgment and saves you from rewriting later.
-
-2. **Say what one row means.** *"One row per customer."*
-   This is the target for your answer. If the result should have one row per customer and you see a customer twice, you know something is wrong before anyone else does.
-
-3. **Build it in small steps, checking each one.**
-   Write one piece, run it, look at it, then add the next, like testing each brick before building the wall. A mistake caught at step one takes seconds to fix; found at the end, it takes minutes you don't have.
-
-4. **Check the totals.**
-   Joining two tables can quietly copy rows. Example: one customer with two accounts and a $100 purchase becomes $200 after a careless join. A quick count or total before and after each join catches this, and it's the most common SQL mistake interviewers look for.
-
-5. **Think out loud.**
-   The interviewer can only score what they can hear. Saying *"I'm using a left join so customers with no purchases stay in"* earns credit even if the final query has a small slip. Silence earns nothing.
-
-6. **Mention speed briefly.** *"On a large table, I'd filter by date first."*
-   One sentence shows you've worked with real data volumes: reading less data is the biggest speed-up. Don't go deeper unless they ask.
+Karat Studio rebuilds the tables on every run, so keep the setup at the top of the editor.
 
 ---
 
-## Step 5: Interview day, play by play
+## 4. Interview day
 
 ### Before the call
 
-| When | What to do | Why |
-|---|---|---|
-| 60 min before | Stop studying. Eat, water, bathroom. | A rested brain beats one more drill. |
-| 30 min before | Open Karat Studio, choose **PostgreSQL**, run a tiny test (`select 1;`). Open `cheatsheet.md` in another tab. | No surprises with the tool or the language. |
-| 10 min before | Headphones on, camera and mic checked, phone silent. Read "the 5 that will bite you" once. | You start calm, with the traps fresh in mind. |
+| When | Do this |
+|---|---|
+| 60 min before | Stop studying. Eat, drink water. |
+| 30 min before | Open Karat Studio, choose PostgreSQL, run `select 1;`. Open `cheatsheet.md` in another tab. |
+| 10 min before | Headphones on, camera and mic checked, phone silent. |
 
-### During the hour
+### The hour
 
 | Minutes | What happens | What you do |
 |---|---|---|
-| 0 to 5 | **Introductions** | Give your 60-second pitch: who you are, what you build, why this role. Then say: *"I'll be using PostgreSQL. Is it OK if I keep a syntax cheatsheet open?"* |
-| 5 to 15 | **Quick questions** | Short answers out loud, about 30 seconds each, like the quick-fire drills. If you don't know, say how you'd find out. |
-| 15 to 55 | **The SQL problem**, in stages that get harder | For each stage: confirm the rules, say what one row means, build in small steps, check totals, think out loud (Step 4). |
-| 55 to 60 | **Your questions** | Ask one: *"What does the analytics team's work look like day to day?"* |
+| 0 to 5 | Introductions | Your 60-second pitch. Then ask: *"Is it OK if I keep a syntax cheatsheet open?"* |
+| 5 to 15 | Quick questions | 30-second answers out loud. If unsure, say how you'd find out. |
+| 15 to 55 | SQL problem, in stages that get harder | The six moves below, for every stage. Finishing more stages beats perfecting one. |
+| 55 to 60 | Your questions | Ask one: *"What does the team's day-to-day work look like?"* |
+
+### The six moves, for every SQL question
+
+1. **Confirm the rules.** *"Should users with no purchases show zero, or be left out?"* Two correct queries can give different answers if they assume different rules. Ask first.
+2. **Say what one row means.** *"One row per user."* That's your target. A user appearing twice tells you something's wrong.
+3. **Build in small steps.** One CTE at a time: run it, look at it. A mistake caught early takes seconds to fix.
+4. **Check the totals.** A careless join quietly copies rows (see "A result looks wrong" below).
+5. **Think out loud.** *"I'm using a left join so users with no purchases stay in."* The interviewer can only score what they hear.
+6. **Mention speed in one line.** *"On a large table, I'd index `user_id` and filter by date first."* Go deeper only if asked.
 
 ### If something goes wrong
 
-| Situation | What to say or do |
+| Situation | Do this |
 |---|---|
-| You get an error | Read it out loud, then fix it. Most are syntax from the cheatsheet: `qualify`, `date_add`, `datediff`, `5 / 2`. |
-| You're stuck | *"Let me write the simple version first, then improve it."* A working simple answer beats an unfinished perfect one. |
-| You forget syntax | *"I'll check the docs for this one."* Karat allows it if you say so. |
-| A result looks wrong | Count rows: `select count(*) from ...`. A wrong join usually shows up as too many rows. |
-| Time is running out | Describe the rest out loud: *"Next I'd add a window function to rank them."* You get credit for the plan. |
+| An error | Read it out loud. Most are Databricks habits: `qualify`, `date_add`, `datediff`, `5 / 2`. Check the cheatsheet. |
+| Stuck | *"Let me write the simple version first."* A working simple answer beats an unfinished perfect one. |
+| Forgot syntax | *"I'll check the docs for this."* Karat allows it if you say so. |
+| A result looks wrong | Almost always a join copied rows. Run the three checks below. |
+| Running out of time | Say the rest out loud: *"Next I'd rank them with a window function."* You get credit for the plan. |
+
+### A result looks wrong: three checks
+
+**1. Do the rows match what one row should mean?** If the answer is "one row per user", these two numbers must be equal:
+```sql
+select count(*) as total_rows, count(distinct user_id) as users
+from ( /* your query, without the final semicolon */ ) q;
+```
+More rows than users means a join copied some users.
+
+**2. Which join did it?** Count rows after each step. The count jumps at the join that copies. Example from drill J2:
+
+| Step | Rows | What it means |
+|---|---|---|
+| transactions | 7 | one row per transaction |
+| + accounts | 7 | still one per transaction: each belongs to one account. Fine |
+| + refunds | 8 | transaction 6 has 2 refunds, so it now appears **twice** |
+
+**3. Does a total match the source table?** Compare with the raw sum:
+```sql
+select sum(-amount) from transactions where status = 'posted' and amount < 0;   -- 955
+```
+In J2, summing spend after joining refunds gives 1,155: transaction 6's 200 was counted twice.
+
+**How to fix it:**
+- **Aggregate first, then join.** Total refunds per user in their own CTE, then join that one row per user.
+- **Deduplicate the lookup table.** Keep one row per key with `row_number()` or `distinct on`.
+- **Check the join condition.** A missing column in `on` matches far too many rows.

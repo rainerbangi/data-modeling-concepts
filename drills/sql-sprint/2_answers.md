@@ -1,8 +1,6 @@
 # 2. Answers (PostgreSQL)
 
-Open an answer only after you've tried the drill. Run each answer under that drill's **Setup** from `1_drills.md`. Every query here was tested on PostgreSQL.
-
-Each answer gives: **the answer or the idea**, **the trap**, **SQL**, **expected result**, and **follow-ups** the interviewer may ask, with short answers to say out loud.
+Run each answer under its drill's setup. All were tested on PostgreSQL. Each gives the answer, the trap, expected results and likely follow-up questions.
 
 ---
 

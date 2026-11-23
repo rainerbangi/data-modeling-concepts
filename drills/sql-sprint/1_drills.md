@@ -1,10 +1,8 @@
 # 1. Drills (PostgreSQL)
 
-**How to practice:** open the Karat Studio practice environment (or any Postgres), choose **PostgreSQL**, paste the drill's **Setup** at the top and write your query under it. Karat Studio recreates the tables every time you click Run, so keep the setup in the editor.
+Paste a drill's **Setup** into Karat Studio (PostgreSQL), write your query below it and run. Then check `2_answers.md` and log it in `progress.md`.
 
 **Spend** means posted debits (`status = 'posted'` and `amount < 0`), shown as a positive number.
-
-After each drill: check `2_answers.md` (same ID) and log it in `progress.md`.
 
 ---
 
