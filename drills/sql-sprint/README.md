@@ -42,24 +42,24 @@ Work top to bottom. Tick each box as you go.
 
 ## Step 3: How to do each drill
 
-1. **Read** the brief: the scenario, the output it asks for, and "Clarify first" if there is one.
-2. **Start a timer** for the minutes in the drill's title.
-3. **Write your answer** in the empty cell under the drill and run it.
-4. **Stuck for 10 minutes?** Read one hint, then try again.
-5. **Check** in `2_answers` under the same drill ID (for example, J3).
-6. **Missed it?** Add it to your list for Wednesday morning.
+1. **Read** what's being asked.
+2. **Set a timer** for the minutes shown.
+3. **Write and run** your answer in the empty cell.
+4. **Stuck after 10 minutes?** Read one hint.
+5. **Check** your answer in `2_answers` (same drill number).
+6. **Note any misses** to redo Wednesday morning.
 
 ---
 
 ## Step 4: In the interview
 
-For every SQL question, follow the same six moves:
+**The hour:** about 5 minutes of introductions, 10 minutes of quick questions, then 40 minutes of SQL that gets harder in stages. Finishing more stages beats perfecting one.
 
-1. **Clarify:** "Do declined transactions count? Should customers with no activity show 0?"
-2. **Say the grain:** "One row per customer."
-3. **Build in steps:** one CTE per step, so each piece can be checked.
-4. **Check row counts:** did a join multiply rows?
-5. **Talk while you type:** silence costs more than a small mistake.
-6. **Mention performance in one line:** "At scale I'd filter on the raw date column so files can be skipped."
+**For each question:**
 
-**What to expect:** about 5 minutes of introductions, about 10 minutes of quick discussion questions, then about 40 minutes of SQL. The SQL is usually one schema with several parts that get harder. Getting through more parts matters more than perfecting one.
+1. **Confirm the rules first.** "Should customers with no purchases show zero?"
+2. **Say what one row means.** "One row per customer."
+3. **Build it in small steps,** checking each one.
+4. **Check the totals.** A wrong join quietly duplicates rows.
+5. **Think out loud.** Silence costs more than a small mistake.
+6. **Mention speed briefly.** "On a large table, I'd filter by date first."
