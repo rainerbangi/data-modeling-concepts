@@ -6,7 +6,7 @@
 |---|---|
 | `1_drills.md` | Practice. Each drill has a setup to paste, a task and hints |
 | `2_answers.md` | Check your answer after each drill |
-| `cheatsheet.md` | Translate Databricks habits to Postgres. Keep it open in the interview |
+| `cheatsheet.md` / `.pdf` | Postgres syntax on one page. Keep it open in the interview |
 | `progress.md` | Log each attempt and build your redo list |
 
 ---
@@ -20,7 +20,7 @@ Open your Karat dashboard, launch **Karat Studio**, choose **PostgreSQL**.
 ## 2. Plan
 
 **Monday night**
-- [ ] Read "the 5 that will bite you" at the top of `cheatsheet.md`
+- [ ] Read the "5 traps" at the top of the cheatsheet
 - [ ] Part 1: Read it first (R1 to R8)
 - [ ] Part 2: Joins (J1 to J5)
 

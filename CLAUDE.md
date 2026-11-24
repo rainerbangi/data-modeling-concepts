@@ -11,7 +11,7 @@ This repo trains Rainer to be a strong analytics engineer: dimensional modeling,
 | `drills/answer_key.md` | Explanations, solution SQL, expected results | The only place answers live |
 | `drills/must_do.md` | The 15 interview-priority drills | Keep in sync with drill numbers |
 | `drills/log.md` | Rainer's attempt log | Edit only when asked |
-| `drills/sql-sprint/` | PostgreSQL interview sprint: drills, answers, Databricks-to-Postgres cheatsheet, progress tracker | Answers only in `2_answers.md`; every answer tested on Postgres |
+| `drills/sql-sprint/` | PostgreSQL interview sprint: drills, answers, one-page Postgres cheatsheet (md + pdf), progress tracker | Answers only in `2_answers.md`; every answer tested on Postgres |
 
 ## Editing drills
 
