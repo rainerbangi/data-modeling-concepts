@@ -36,7 +36,6 @@
 | Previous / next value | `lag(x) over (partition by k order by ts)` · `lead(x)` |
 | Running total | `sum(x) over (partition by k order by ts, id rows between unbounded preceding and current row)` |
 | Moving average | `avg(x) over (order by d rows between 6 preceding and current row)` (fill missing days first) |
-| First value in group | `first_value(x) over (partition by k order by ts)` |
 | Default frame | with `order by`: `range ... current row`, so **ties are summed together**. Write `rows` |
 
 ## Dates
@@ -50,7 +49,6 @@
 | Parts | `extract(year from d)` · `extract(dow from d)` (Sun = 0) · `extract(isodow from d)` (Mon = 1) |
 | A month, safely | `ts >= '2026-03-01' and ts < '2026-04-01'` (never `between`) |
 | Every day in a range | `generate_series(date '2026-03-01', date '2026-03-07', interval '1 day')::date` |
-| Today / now | `current_date` · `now()` |
 
 ## Strings, nulls, casting
 | Task | Postgres |
@@ -65,17 +63,18 @@
 ## Error → fix
 | Error says | Fix |
 |---|---|
-| must appear in the GROUP BY clause | group by it, or aggregate it |
-| window functions are not allowed in WHERE | compute in a CTE, filter outside |
+| …must appear in the GROUP BY… | group by it, or aggregate it |
+| window functions not allowed in WHERE | compute in a CTE, filter outside |
 | division by zero | `nullif(denominator, 0)` |
-| function round(double precision, integer) does not exist | `round(x::numeric, 2)` |
-| column reference "id" is ambiguous | prefix with the table alias |
-| operator does not exist: integer = text | cast one side: `x::int` |
+| round(double precision, integer)… | `round(x::numeric, 2)` |
+| column "id" is ambiguous | prefix with the table alias |
+| operator… integer = text | cast one side: `x::int` |
 
 ## Performance
 | Task | Postgres |
 |---|---|
 | See the plan with real times | `explain analyze select ...` |
+| Read a plan | innermost line runs first · expected vs actual `rows=` 10× apart: `analyze` · red flags: many `Rows Removed`, `Disk:`, huge `loops` |
 | Index for a filter + date range | `create index on t (user_id, created_at)` (equality column first) |
 | Index can't be used when | a function wraps the column, `like '%x'`, or most rows match |
 | Upsert | `insert ... on conflict (id) do update set amount = excluded.amount` |
