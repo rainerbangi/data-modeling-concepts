@@ -4,9 +4,9 @@
 
 | File | Use it to |
 |---|---|
-| `1_drills.md` | Practice. Each drill has a setup to paste, a task and hints |
-| `2_answers.md` | Check your answer after each drill |
-| `cheatsheet.md` / `.pdf` | Postgres syntax on one page. Keep it open in the interview |
+| `1_drills.md` | Practice. Each drill has the interviewer's words, a setup to paste, the clarifying questions with their answers, and hints |
+| `2_answers.md` | Check your answer. Each one is a script: what to clarify, what to say, the query step by step, the result, the checks and the follow-ups |
+| `cheatsheet.md` / `.pdf` | Page 1: Postgres syntax and error fixes. Page 2: 10 query patterns to adapt. Keep it open in the interview |
 | `progress.md` | Log each attempt and build your redo list |
 
 ---

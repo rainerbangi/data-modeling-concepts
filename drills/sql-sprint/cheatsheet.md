@@ -11,8 +11,10 @@
 | Keep rows with a match | `where exists (select 1 from b where b.id = a.id)` |
 | Keep rows with no match | `where not exists (select 1 from b where b.id = a.id)` (never `not in` with a subquery) |
 | Filter the right table of a left join | Put it in `on`, not `where` |
+| Combine two feeds | `full outer join ... using (user_id)`, then `coalesce` each measure |
 | Range join | `on x >= lo and x < hi` |
 | Self-join | `from users u left join users r on r.user_id = u.referred_by` |
+| Stack rows | `union all` (keeps all) · `union` (removes duplicates) |
 
 ## Aggregation
 | Task | Postgres |
@@ -21,25 +23,26 @@
 | Conditional sum | `sum(amount) filter (where status = 'posted')` |
 | Safe percentage | `round(100.0 * a / nullif(b, 0), 1)` |
 | Filter groups | `having count(*) >= 2` |
-| List / text of values | `array_agg(distinct x)` · `string_agg(x, ', ' order by x)` |
+| List of values | `string_agg(x, ', ' order by x)` · `array_agg(distinct x)` |
 | Median | `percentile_cont(0.5) within group (order by x)` |
+| Larger / smaller of two | `greatest(a, b)` · `least(a, b)` |
 
 ## Window functions
 | Task | Postgres |
 |---|---|
-| Latest row per key | `with r as (select *, row_number() over (partition by k order by ts desc) as rn from t) select * from r where rn = 1` |
-| Same, shorter | `select distinct on (k) * from t order by k, ts desc` |
+| Number rows per key | `row_number() over (partition by k order by ts desc, id)` |
 | Ties: 1,2,3 · 1,1,3 · 1,1,2 | `row_number()` · `rank()` · `dense_rank()` |
 | Top N with ties | `order by spend desc fetch first 3 rows with ties` |
 | Previous / next value | `lag(x) over (partition by k order by ts)` · `lead(x)` |
 | Running total | `sum(x) over (partition by k order by ts, id rows between unbounded preceding and current row)` |
-| 7-day moving average | `avg(x) over (order by d rows between 6 preceding and current row)` (fill missing days first) |
-| Share of total | `100.0 * x / sum(x) over (partition by k)` |
+| Moving average | `avg(x) over (order by d rows between 6 preceding and current row)` (fill missing days first) |
+| First value in group | `first_value(x) over (partition by k order by ts)` |
+| Default frame | with `order by`: `range ... current row`, so **ties are summed together**. Write `rows` |
 
 ## Dates
 | Task | Postgres |
 |---|---|
-| Add days | `d + 7` (date) · `ts + interval '7 days'` (timestamp) |
+| Add days | `d + 7` (date) · `ts + interval '7 days'` · `d + interval '1 month'` |
 | Days between | `end_d - start_d` · timestamps: `end_ts::date - start_ts::date` |
 | Seconds between | `extract(epoch from ts2 - ts1)` |
 | First of month | `date_trunc('month', ts)::date` |
@@ -59,21 +62,15 @@
 | Cast | `x::text` · `x::int` · `x::numeric` · `x::date` |
 | If / else | `case when x > 0 then 'in' else 'out' end` |
 
-## Table setup
-```sql
-drop table if exists t;
-create table t (
-  id int primary key,
-  user_id int references users (user_id),
-  created_at timestamp,
-  amount numeric(10,2),
-  status text
-);
-insert into t values
-  (1, 1, '2026-03-01 10:00', -50.00, 'posted'),
-  (2, 1, '2026-03-02 09:00',  20.00, 'posted');
-```
-Inline rows: `select * from (values (1, 'a'), (2, 'b')) as v(id, name)`
+## Error → fix
+| Error says | Fix |
+|---|---|
+| must appear in the GROUP BY clause | group by it, or aggregate it |
+| window functions are not allowed in WHERE | compute in a CTE, filter outside |
+| division by zero | `nullif(denominator, 0)` |
+| function round(double precision, integer) does not exist | `round(x::numeric, 2)` |
+| column reference "id" is ambiguous | prefix with the table alias |
+| operator does not exist: integer = text | cast one side: `x::int` |
 
 ## Performance
 | Task | Postgres |
@@ -82,4 +79,154 @@ Inline rows: `select * from (values (1, 'a'), (2, 'b')) as v(id, name)`
 | Index for a filter + date range | `create index on t (user_id, created_at)` (equality column first) |
 | Index can't be used when | a function wraps the column, `like '%x'`, or most rows match |
 | Upsert | `insert ... on conflict (id) do update set amount = excluded.amount` |
-| Set difference | `select ... except select ...` |
+
+<!-- page 2 -->
+
+# Interview patterns
+
+**Say before you type:** "One row per ___." · "Are nulls, ties and duplicates possible?" · "Is the end date included?" · **Check after:** row count = keys · total = source total · one edge case by hand
+
+**Table used below:** `t (id, user_id, ts timestamp, amount numeric, status text)`. Swap in the real names.
+
+## 1. Latest row per user
+```sql
+with ranked as (
+  select *, row_number() over (
+           partition by user_id
+           order by ts desc, id desc) as rn
+  from t
+)
+select * from ranked where rn = 1;
+
+-- Postgres only
+select distinct on (user_id) *
+from t
+order by user_id, ts desc, id desc;
+```
+
+## 2. Running total
+```sql
+select id, user_id, ts, amount,
+       sum(amount) over (
+         partition by user_id order by ts, id
+         rows between unbounded preceding
+                  and current row) as running
+from t;
+```
+
+## 3. Aggregate before joining (no fan-out)
+```sql
+with a as (select user_id, sum(amount) as spend
+           from t group by user_id),
+     b as (select user_id, sum(amount) as refunded
+           from refunds group by user_id)
+select coalesce(a.user_id, b.user_id) as user_id,
+       coalesce(a.spend, 0)    as spend,
+       coalesce(b.refunded, 0) as refunded
+from a
+full outer join b on b.user_id = a.user_id;
+```
+
+## 4. Fill missing days
+```sql
+select d::date as day,
+       coalesce(sum(t.amount), 0) as total
+from generate_series(date '2026-03-01',
+                     date '2026-03-31',
+                     interval '1 day') as d
+left join t on t.ts >= d
+           and t.ts <  d + interval '1 day'
+group by d
+order by d;
+```
+
+## 5. Month over month (with a month spine)
+```sql
+with months as (
+  select generate_series(date '2026-01-01',
+           date '2026-04-01',
+           interval '1 month')::date as m
+), mau as (
+  select date_trunc('month', ts)::date as m,
+         count(distinct user_id) as users
+  from t group by 1
+), filled as (
+  select months.m, coalesce(mau.users, 0) as users
+  from months left join mau using (m)
+), prev as (
+  select *, lag(users) over (order by m) as prev
+  from filled
+)
+select m, users, prev,
+       round(100.0 * (users - prev)
+             / nullif(prev, 0), 1) as pct_change
+from prev
+order by m;
+```
+
+## 6. In this month, not last month
+```sql
+select distinct c.user_id
+from t c
+where c.ts >= '2026-04-01' and c.ts < '2026-05-01'
+  and not exists (
+    select 1 from t p
+    where p.user_id = c.user_id
+      and p.ts >= '2026-03-01'
+      and p.ts <  '2026-04-01');
+```
+
+## 7. Repeat within 60 seconds
+```sql
+with x as (
+  select *, lag(ts) over (
+              partition by user_id, amount
+              order by ts) as prev_ts
+  from t
+)
+select id, extract(epoch from ts - prev_ts) as secs
+from x
+where ts - prev_ts <= interval '60 seconds';
+```
+
+## 8. Top 3 per group, ties kept
+```sql
+with s as (
+  select status, user_id, sum(amount) as total
+  from t group by status, user_id
+), r as (
+  select *, rank() over (partition by status
+                         order by total desc) as rnk
+  from s
+)
+select * from r where rnk <= 3;
+```
+
+## 9. Rate and share of total
+```sql
+select user_id,
+       round(100.0 * count(*) filter (
+               where status = 'success')
+             / nullif(count(*), 0), 1) as success_pct,
+       round(100.0 * sum(amount)
+             / sum(sum(amount)) over (), 1) as pct_of_all
+from t
+group by user_id;
+```
+
+## 10. Consecutive-day streaks
+```sql
+with days as (
+  select distinct user_id, ts::date as d from t
+), g as (
+  select *, d - (row_number() over (
+                   partition by user_id
+                   order by d))::int as grp
+  from days
+)
+select user_id, min(d) as start_day,
+       max(d) as end_day, count(*) as streak
+from g
+group by user_id, grp;
+```
+Consecutive days minus 1, 2, 3 land on the same date, so each streak shares one `grp`.
