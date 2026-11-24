@@ -1,6 +1,6 @@
 # 1. Drills (PostgreSQL)
 
-Paste a drill's **Setup** into Karat Studio (PostgreSQL), write your query below it and run. Then check `2_answers.md` and log it in `progress.md`.
+Read the **Interviewer says** line as if it's said to you. Paste the **Setup** into Karat Studio (PostgreSQL), ask the **Clarify first** questions out loud, then write your query below the setup and run. Then check `2_answers.md` and log it in `progress.md`.
 
 **Spend** means posted debits (`status = 'posted'` and `amount < 0`), shown as a positive number.
 
@@ -8,7 +8,7 @@ Paste a drill's **Setup** into Karat Studio (PostgreSQL), write your query below
 
 ## Part 1: Read it first (predict the output, find the bug)
 
-Say your answer out loud **before** running anything. Then run it to check.
+**Interviewer says:** "Without running it, what does this return?" Say your answer out loud, then run it to check.
 
 ### R1. Three kinds of count (2 min)
 **What this tests:** how `count` treats nulls and repeats.
@@ -176,7 +176,7 @@ select date '2026-03-01' + 7                           as a,
 ### J1. Every user's March spend (8 min)
 **What this tests:** where a filter goes in a left join.
 
-**Scenario:** Marketing wants every user with their March 2026 spend, including users who spent nothing (show 0).
+**Interviewer says:** "Marketing wants every user's March 2026 spend, including people who spent nothing. Can you write that?"
 
 **Setup**
 ```sql
@@ -200,7 +200,9 @@ insert into transactions values
 
 **Your task:** `user_id, march_spend` for all 5 users, sorted by `user_id`.
 
-**Clarify first:** declined transactions and deposits don't count.
+**Clarify first** (ask, then use these answers):
+- *"Do declined transactions or deposits count?"* No. Spend is posted debits only.
+- *"Should users with no spend appear?"* Yes, with 0.
 
 **Hints:**
 1. Put the filters in `WHERE` first. Who disappears?
@@ -211,7 +213,7 @@ insert into transactions values
 ### J2. Spend and refunds per user (10 min)
 **What this tests:** fan-out when two "many" tables meet.
 
-**Scenario:** Finance wants total spend and total refunded per user, side by side.
+**Interviewer says:** "Finance wants each user's total spend and total refunded, side by side, one row per user."
 
 **Setup**
 ```sql
@@ -229,6 +231,10 @@ insert into refunds values (1, 6, 50), (2, 6, 30), (3, 1, 50);
 
 **Your task:** `user_id, spend, refunded` (0 if none), one row per user, sorted by `user_id`.
 
+**Clarify first** (ask, then use these answers):
+- *"Can one transaction have more than one refund?"* Yes.
+- *"Users with no refunds?"* Show 0.
+
 **Hints:**
 1. Join transactions to refunds directly and look at transaction 6.
 2. Get each measure to one row per user before combining.
@@ -237,6 +243,8 @@ insert into refunds values (1, 6, 50), (2, 6, 30), (3, 1, 50);
 
 ### J3. Users with no activity, users with travel (8 min)
 **What this tests:** anti-joins and semi-joins.
+
+**Interviewer says:** "Two quick ones. Which users have never had a transaction? And which users have had a posted travel transaction?"
 
 **Setup**
 ```sql
@@ -255,6 +263,10 @@ insert into transactions values
 
 **Databricks vs Postgres:** no `left anti join` or `left semi join`. Use `not exists` and `exists`.
 
+**Clarify first** (ask, then use these answers):
+- *"For the first, does a declined or pending transaction count as activity?"* Yes, any transaction counts.
+- *"For the second, list each user once?"* Yes.
+
 **Hints:**
 1. For (a), why is `not in` risky with this data?
 2. For (b), a plain join returns one user twice. Why?
@@ -263,6 +275,8 @@ insert into transactions values
 
 ### J4. Who referred whom (8 min)
 **What this tests:** self-joins and counting zeros.
+
+**Interviewer says:** "Our users table stores who referred each user. Show each user with their referrer's name. Then, how many people did each user refer?"
 
 **Setup**
 ```sql
@@ -276,6 +290,9 @@ insert into users values
 - (a) Every user with their referrer's name (null if none or unknown).
 - (b) How many people each user referred, including zero.
 
+**Clarify first** (ask, then use these answers):
+- *"User 4 was referred by user 9, who isn't in the table. Keep user 4?"* Yes, with a null name.
+
 **Hints:**
 1. One table, two roles: give each an alias.
 2. What does `count(*)` return for a user who referred nobody?
@@ -284,6 +301,8 @@ insert into users values
 
 ### J5. Fee per transaction (8 min)
 **What this tests:** joining on a range, and boundary values.
+
+**Interviewer says:** "We charge a fee on each debit based on its size. Here's the tier table. Give me the fee per transaction and the total."
 
 **Setup**
 ```sql
@@ -296,6 +315,10 @@ insert into fee_tiers values (1, 0, 100, 1.00), (2, 100, 500, 0.50), (3, 500, 10
 ```
 
 **Your task:** `txn_id, debit, tier, fee` (fee rounded to cents), then the total fees.
+
+**Clarify first** (ask, then use these answers):
+- *"Is a boundary like 100 in the lower or the upper tier?"* min_amt is included, max_amt is excluded.
+- *"Round each fee, or round the total?"* Round each fee to cents, then add them up.
 
 **Hints:**
 1. The join condition is a range, not an equality.
@@ -310,7 +333,7 @@ insert into fee_tiers values (1, 0, 100, 1.00), (2, 100, 500, 0.50), (3, 500, 10
 ### A1. Payment success rate per user (8 min)
 **What this tests:** conditional counts with `FILTER`, and safe division.
 
-**Scenario:** Risk wants each user's payment outcomes.
+**Interviewer says:** "Risk wants a per-user summary of payment outcomes, with a success rate."
 
 **Setup**
 ```sql
@@ -334,6 +357,10 @@ insert into payments values
 
 **Databricks vs Postgres:** `count_if(...)` becomes `count(*) filter (where ...)`.
 
+**Clarify first** (ask, then use these answers):
+- *"Does pending count toward the rate?"* No. Successes over successes plus failures.
+- *"Payment 10 has no amount. Count it?"* Yes, as a failure. We're counting attempts.
+
 **Hints:**
 1. One `group by`, with a `filter` on each count.
 2. What does `1 / 3` return in Postgres?
@@ -343,9 +370,14 @@ insert into payments values
 ### A2. Users with repeated failures (5 min)
 **What this tests:** `HAVING` vs `WHERE`.
 
+**Interviewer says:** "Which users had two or more failed payments in March?"
+
 **Setup:** same as A1.
 
 **Your task:** users with **2 or more failed** payments in **March 2026**: `user_id, failures`.
+
+**Clarify first** (ask, then use these answers):
+- *"Does exactly two count?"* Yes.
 
 **Hints:**
 1. Which condition filters rows, and which filters groups?
@@ -355,7 +387,7 @@ insert into payments values
 ### A3. Possible duplicate charges (10 min)
 **What this tests:** comparing a row with the previous one (`LAG`) or a self-join on a time window.
 
-**Scenario:** Support suspects the card network sometimes sends the same charge twice. Flag a charge if the **same user** had a charge at the **same merchant** for the **same amount** up to **60 seconds earlier**.
+**Interviewer says:** "Support thinks the card network sometimes sends the same charge twice. Flag a charge if the same user had a charge at the same merchant for the same amount up to 60 seconds earlier."
 
 **Setup**
 ```sql
@@ -376,7 +408,9 @@ insert into card_txns values
 
 **Your task:** `txn_id, user_id, created_at, seconds_since_previous` for flagged charges, sorted by `txn_id`.
 
-**Clarify first:** exactly 60 seconds counts as a duplicate.
+**Clarify first** (ask, then use these answers):
+- *"Does exactly 60 seconds count?"* Yes.
+- *"Flag both charges, or only the later one?"* Only the later one.
 
 **Hints:**
 1. Which columns define "the same charge"? Those go in `partition by`.
@@ -390,6 +424,8 @@ insert into card_txns values
 
 ### W1. Latest transaction per user (8 min)
 **What this tests:** top-1 per group, ties, and a Postgres-only shortcut.
+
+**Interviewer says:** "For each user, give me their most recent transaction."
 
 **Setup**
 ```sql
@@ -406,6 +442,10 @@ insert into transactions values
 
 **Databricks vs Postgres:** no `qualify`; `distinct on` is Postgres-only.
 
+**Clarify first** (ask, then use these answers):
+- *"What if two transactions tie on time?"* Keep the larger amount.
+- *"Rows with no user?"* Skip them.
+
 **Hints:**
 1. Which user has a tie?
 2. `distinct on (user_id)` keeps the first row per user by the `order by`. What must the `order by` start with?
@@ -414,6 +454,8 @@ insert into transactions values
 
 ### W2. Running account balance (10 min)
 **What this tests:** running totals, and the default window frame trap.
+
+**Interviewer says:** "Show the balance of each account after every entry. Then tell me which accounts ever went negative, and on which entry."
 
 **Setup**
 ```sql
@@ -430,6 +472,10 @@ insert into ledger values
 - (a) `account_id, entry_id, created_at, amount, balance`: the balance after each entry, in time order (ties by `entry_id`).
 - (b) Accounts that ever went negative, with the first entry that did it.
 
+**Clarify first** (ask, then use these answers):
+- *"Does each account start at 0?"* Yes.
+- *"Two entries have the same timestamp. Which goes first?"* Lower entry_id first.
+
 **Hints:**
 1. Write `sum(amount) over (partition by account_id order by created_at)` first and look at entries 2 and 3.
 2. When a window has `order by` and no frame, which frame does SQL use?
@@ -438,6 +484,8 @@ insert into ledger values
 
 ### W3. Top merchants: ROW_NUMBER, RANK, DENSE_RANK (8 min)
 **What this tests:** how the three ranking functions treat ties.
+
+**Interviewer says:** "Who are our top 3 merchants by spend?"
 
 **Setup**
 ```sql
@@ -452,6 +500,9 @@ insert into card_txns values
 - (a) Spend per merchant with all three rankings side by side.
 - (b) "Top 3 merchants." Return what each function would give, and say which one you'd use and why.
 
+**Clarify first** (ask, then use these answers):
+- *"Two merchants tie. Do you want exactly 3 rows, or ties included?"* Show me what each option returns.
+
 **Hints:**
 1. Aggregate first, then rank.
 2. Postgres also has `fetch first 3 rows with ties`.
@@ -460,6 +511,8 @@ insert into card_txns values
 
 ### W4. Moving average with a missing day (12 min)
 **What this tests:** `ROWS` vs `RANGE` frames, and filling gaps.
+
+**Interviewer says:** "Product wants a 3-day moving average of daily spend for a chart. Some days have no row."
 
 **Setup**
 ```sql
@@ -478,6 +531,10 @@ insert into daily_spend values
 
 Then say which is right for "average daily spend over the last 3 days".
 
+**Clarify first** (ask, then use these answers):
+- *"Does a missing day mean zero spend, or unknown?"* Zero: nothing was spent.
+- *"3 days meaning 3 rows, or 3 calendar days?"* Calendar days: the day and the 2 before it.
+
 **Hints:**
 1. `rows` counts rows; `range` counts calendar time. What happens around Mar 3?
 2. Missing days had **no spend**. Does `range` treat them as 0, or ignore them?
@@ -487,6 +544,8 @@ Then say which is right for "average daily spend over the last 3 days".
 
 ### W5. Monthly active users and month-over-month change (12 min)
 **What this tests:** distinct counts per month, `LAG`, and a month with no data.
+
+**Interviewer says:** "Show monthly active users for January through April, with the change from the month before."
 
 **Setup**
 ```sql
@@ -500,6 +559,10 @@ insert into activity values
 
 **Your task:** `month, mau, prev_mau, change, pct_change` for January to April 2026. Months with no activity show 0. Percent change with 1 decimal; null when last month was 0.
 
+**Clarify first** (ask, then use these answers):
+- *"What counts as active?"* Any activity row in the month, each user once.
+- *"Percent change when last month was 0?"* Null.
+
 **Hints:**
 1. Where's February? What does `lag` compare March with if February is missing?
 2. Build all four months with `generate_series`, then attach the counts.
@@ -510,9 +573,14 @@ insert into activity values
 ### W6. Active this month, not last month (8 min)
 **What this tests:** comparing two sets of users.
 
+**Interviewer says:** "Which users were active in April but not in March?"
+
 **Setup:** same as W5.
 
 **Your task:** users active in April 2026 who were **not** active in March 2026. Write it twice: with `not exists`, and with `except`.
+
+**Clarify first** (ask, then use these answers):
+- *"Fixed months, or relative to today?"* Fixed: April and March 2026.
 
 **Hints:**
 1. Each month's active users is a set; you want April minus March.
@@ -522,7 +590,7 @@ insert into activity values
 ### W7. Fill missing days in daily totals (8 min)
 **What this tests:** `generate_series` to create a date spine.
 
-**Scenario:** A daily revenue chart must show every day in March 1 to 7, with 0 on days with no sales.
+**Interviewer says:** "Our daily revenue chart has holes. Give me every day from March 1 to 7, with 0 on days with no sales."
 
 **Setup**
 ```sql
@@ -537,6 +605,9 @@ insert into sales values
 
 **Databricks vs Postgres:** `explode(sequence(...))` becomes `generate_series(...)`.
 
+**Clarify first** (ask, then use these answers):
+- *"A sale at 23:59:59 on March 7: which day?"* March 7.
+
 **Hints:**
 1. `generate_series` over dates returns timestamps. Cast to `date`.
 2. Group sales by `created_at::date`, then left join onto the series.
@@ -550,13 +621,17 @@ insert into sales values
 ### D1. Design the tables (15 min, whiteboard or SQL)
 **What this tests:** keys, one-to-many relationships, constraints and normalization. Karat may use the whiteboard for this.
 
-**Scenario:** design tables for a payments app: **users** own **accounts**; each account can have several **cards**; **transactions** happen on an account, sometimes with a card, at a **merchant**.
+**Interviewer says:** "Design the tables for a payments app: users own accounts, accounts can have several cards, and transactions happen on an account, sometimes with a card, at a merchant."
 
 **Your task:**
 1. Name the tables, their primary keys and foreign keys.
 2. Say which relationships are one-to-many.
 3. Write the `create table` statements with `primary key`, `references`, `not null`, `unique` and one `check` constraint.
 4. Insert one valid row per table, then try a transaction for an account that doesn't exist and confirm it's rejected.
+
+**Clarify first** (ask, then use these answers):
+- *"Can a user have several accounts?"* Yes.
+- *"Can a transaction happen without a card?"* Yes, a transfer for example.
 
 **Hints:**
 1. Where should a merchant's name live: on every transaction, or in its own table? Why?
@@ -566,6 +641,8 @@ insert into sales values
 
 ### O1. Make a slow query fast (12 min)
 **What this tests:** indexes and query plans. Unlike Databricks, Postgres uses **indexes**, and `explain analyze` is your query profile.
+
+**Interviewer says:** "This query runs all day and it's slow. Tell me why, then make it fast."
 
 **Setup** (100,000 rows, so the plan changes when you add an index)
 ```sql
@@ -594,6 +671,10 @@ where user_id = 42
 2. List what makes it slow.
 3. Add the right index and rewrite the query so it can use it. Run `explain analyze` again and compare.
 
+**Clarify first** (ask, then use these answers):
+- *"Is status always lowercase?"* Yes.
+- *"How often does it run?"* Often, and the table keeps growing.
+
 **Hints:**
 1. Which column has the most selective filter?
 2. A function wrapped around a column usually stops an index from being used.
@@ -603,7 +684,7 @@ where user_id = 42
 ### O2. Talk track: "This query got slow" (5 min, out loud)
 **What this tests:** a calm, structured answer. You're scored on structure.
 
-**The prompt:** "A report query on Postgres used to take 2 seconds. Now it takes 2 minutes. What do you do?"
+**Interviewer says:** "A report query on Postgres used to take 2 seconds. Now it takes 2 minutes. What do you do?"
 
 **Your task:** answer out loud in under 2 minutes.
 
@@ -619,6 +700,8 @@ where user_id = 42
 
 ### M1. Karat-style progressive question
 **What this tests:** everything, the way Karat asks it: one schema, parts that get harder. Getting through more parts beats perfecting one.
+
+**Interviewer says:** "I'll give you one schema and a series of questions that build on each other. Talk me through your thinking."
 
 **How to run it:** 40-minute timer, talk out loud, clarify before each part, no answer key until the end.
 
