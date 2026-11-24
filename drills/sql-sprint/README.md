@@ -27,7 +27,7 @@ Open your Karat dashboard, launch **Karat Studio**, choose **PostgreSQL**.
 **Tuesday night**
 - [ ] Part 3: Aggregation (A1 to A3)
 - [ ] Part 4: Window functions (W1 to W7)
-- [ ] Part 5: Modeling and performance (D1, O1, O2)
+- [ ] Part 5: Modeling and performance (D1, O1, O2, O3). Do O3 before O1 if plans are new to you
 - [ ] Quick-fire questions, out loud
 
 **Wednesday morning**

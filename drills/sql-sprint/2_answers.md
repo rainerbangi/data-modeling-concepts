@@ -1048,6 +1048,187 @@ where user_id = 42
 
 **Follow-up:** *"Data grew 10 times. What then?"* "Make sure filters are indexed, then consider partitioning by date, so queries on recent data skip old partitions."
 
+### O3. EXPLAIN lab: watch the plan change
+
+The plans below are from Postgres 16 with this setup. Times are from one run; yours will differ. Step types and actual row counts will match. Expected row counts can differ a little, because `analyze` reads a random sample of the table.
+
+**The one idea behind every step:** "Postgres estimates the cost of each possible plan from its statistics and picks the cheapest. An index wins when it skips most of the table. When most rows are needed, reading the table straight through is cheaper."
+
+#### Step 1. Guess vs truth
+```text
+Seq Scan on transactions  (cost=0.00..3971.00 rows=40 width=28) (actual time=0.014..10.962 rows=40 loops=1)
+  Filter: (user_id = 42)
+  Rows Removed by Filter: 199960
+Execution Time: 10.978 ms
+```
+**Say:** "It's a sequential scan. It expected 40 rows and got 40, so the statistics are good. But it read all 200,000 rows to keep 40: 199,960 were thrown away. That's the waste an index removes."
+
+#### Step 2. Add an index
+```text
+Bitmap Heap Scan on transactions  (rows=40) (actual time=0.244..0.318 rows=40)
+  Recheck Cond: (user_id = 42)
+  Heap Blocks: exact=40
+  ->  Bitmap Index Scan on idx_txn_user  (rows=40) (actual rows=40)
+        Index Cond: (user_id = 42)
+Execution Time: 0.341 ms
+
+Index Scan using transactions_pkey on transactions  (rows=1) (actual rows=1)
+  Index Cond: (txn_id = 500)
+Execution Time: 0.017 ms
+```
+**Say:** "Read it from the bottom. The Bitmap Index Scan finds the 40 row locations in the index. The Bitmap Heap Scan then reads only those 40 pages. About 30 times faster, and `Rows Removed by Filter` is gone."
+
+"`txn_id` is the primary key, so at most 1 row matches. For one row, a plain Index Scan is cheapest. The bitmap pays off when there are more rows to collect and read in page order."
+
+**`Index Cond` vs `Filter`:** `Index Cond` means the index did the filtering. `Filter` means rows were read first, then checked. You want your selective conditions under `Index Cond`.
+
+#### Step 3. An index Postgres ignores
+```text
+-- status = 'posted' (90% of rows)
+Seq Scan on transactions  (rows=179813) (actual rows=180000)
+  Filter: (status = 'posted'::text)
+  Rows Removed by Filter: 20000
+
+-- status = 'declined' (10% of rows)
+Bitmap Heap Scan on transactions  (rows=20187) (actual rows=20000)
+  ->  Bitmap Index Scan on idx_txn_status  (rows=20187) (actual rows=20000)
+```
+**Say:** "The index exists in both cases. For 'posted', 90% of rows match. Using the index would mean looking up 180,000 rows one by one, which costs more than reading the table straight through. So the planner correctly ignores it. For 'declined', only 10% match, so the index is worth it."
+
+**Rule:** an index helps a **selective** filter. A column with few distinct values, like `status`, is a weak index on its own.
+
+#### Step 4. A function on the column
+```text
+-- date_trunc('day', created_at) = '2026-03-01'
+Aggregate  (actual rows=1)
+  ->  Seq Scan on transactions  (rows=1000) (actual rows=1667)
+        Filter: (date_trunc('day'::text, created_at) = '2026-03-01 00:00:00'::timestamp without time zone)
+        Rows Removed by Filter: 198333
+Execution Time: 18.401 ms
+
+-- created_at >= '2026-03-01' and created_at < '2026-03-02'
+Aggregate  (actual rows=1)
+  ->  Bitmap Heap Scan on transactions  (rows=1603) (actual rows=1667)
+        ->  Bitmap Index Scan on idx_txn_created  (rows=1603) (actual rows=1667)
+              Index Cond: ((created_at >= '2026-03-01 00:00:00') AND (created_at < '2026-03-02 00:00:00'))
+Execution Time: 1.543 ms
+```
+**Say:** "The index stores `created_at` values in order. It doesn't store `date_trunc('day', created_at)`, so it can't search for it, and Postgres has to compute the function on every row. The range version asks for a slice of the stored values, so the index finds it directly. Same 1,667 rows, about 12 times faster."
+
+"Notice the first plan's guess: 1,000 rows. Postgres has no statistics on the function's result, so it uses a default guess. The range version guessed 1,603, much closer."
+
+**Other ways to hide a column from its index:** `lower(status)`, `created_at::date`, `amount * 100 = 5000`, `like '%cafe'`. Fix: rewrite so the bare column is compared, or create an index on the expression (`create index on t (lower(status))`).
+
+#### Step 5. Two filters, one index
+```text
+-- (a) only idx_txn_user exists
+Bitmap Heap Scan on transactions  (rows=10) (actual rows=13)
+  Recheck Cond: (user_id = 42)
+  Filter: ((created_at >= '2026-03-01') AND (created_at < '2026-04-01'))
+  Rows Removed by Filter: 27
+  Heap Blocks: exact=40
+  ->  Bitmap Index Scan on idx_txn_user
+        Index Cond: (user_id = 42)
+
+-- (b) with idx_txn_user_created (user_id, created_at)
+Bitmap Heap Scan on transactions  (rows=10) (actual rows=13)
+  Heap Blocks: exact=13
+  ->  Bitmap Index Scan on idx_txn_user_created
+        Index Cond: ((user_id = 42) AND (created_at >= '2026-03-01') AND (created_at < '2026-04-01'))
+
+-- (c) after vacuum analyze
+Index Only Scan using idx_txn_user_created on transactions  (rows=10) (actual rows=13)
+  Index Cond: ((user_id = 42) AND (created_at >= '2026-03-01') AND (created_at < '2026-04-01'))
+  Heap Fetches: 0
+Execution Time: 0.047 ms
+```
+**Say:**
+- "(a) The index finds user 42's 40 rows. The date check is a `Filter`, so Postgres reads all 40 pages and throws away 27 rows."
+- "(b) The composite index has both columns, so both conditions are under `Index Cond`. It reads only 13 pages for 13 rows."
+- "(c) The query only needs `user_id` and `created_at` to count, and both are in the index. So Postgres answers from the index without touching the table: an Index Only Scan. `Heap Fetches: 0` means it never had to visit the table."
+
+**Why `vacuum`?** "Postgres keeps old row versions after updates. The index alone can't tell if a row is still visible. `vacuum` marks pages as all-visible in the **visibility map**, and only then can Postgres trust the index without checking the table."
+
+**Why `(user_id, created_at)` and not `(created_at, user_id)`?** "Equality first, range second. The index is sorted by `user_id`, then by `created_at` inside each user. So user 42's March rows sit next to each other. The other way round, March rows for all 5,000 users are mixed together, and Postgres has to skip through them."
+
+#### Step 6. Two join types
+```text
+-- all users
+HashAggregate  (actual rows=4)
+  Group Key: u.state
+  ->  Hash Join  (rows=199960) (actual rows=200000)
+        Hash Cond: (t.user_id = u.user_id)
+        ->  Seq Scan on transactions t  (actual rows=200000)
+        ->  Hash  (actual rows=5000)
+              Buckets: 8192  Batches: 1  Memory Usage: 260kB
+              ->  Seq Scan on users u  (actual rows=5000)
+
+-- one user
+Nested Loop  (rows=40) (actual rows=40)
+  ->  Index Scan using users_pkey on users u  (actual rows=1)
+        Index Cond: (user_id = 42)
+  ->  Bitmap Heap Scan on transactions t  (actual rows=40)
+        ->  Bitmap Index Scan on idx_txn_user
+              Index Cond: (user_id = 42)
+```
+**Say:**
+- "The first needs every row, so a Hash Join: hash the smaller table, `users` with 5,000 rows, into memory, then stream all 200,000 transactions through it, one lookup each. `Batches: 1` means it fit in memory."
+- "The second needs one user. A Nested Loop finds that one user, then uses the index to fetch their 40 transactions. A hash table would be wasted work."
+- "Nested Loop is great with a small outer side and an index on the inner side. It's terrible when both sides are big, because the inner step runs once per outer row. Watch the `loops` count."
+
+**The third type, Merge Join:** both sides sorted on the join key, then zipped together. Common when both inputs are already sorted, for example by an index.
+
+#### Step 7. Sorting and memory
+```text
+-- order by amount limit 10
+Limit  (actual rows=10)
+  ->  Sort  (actual rows=10)
+        Sort Key: amount
+        Sort Method: top-N heapsort  Memory: 26kB
+        ->  Seq Scan on transactions  (actual rows=200000)
+Execution Time: 42.281 ms
+
+-- order by amount, work_mem = 256kB
+Sort  (actual rows=200000)
+  Sort Key: amount
+  Sort Method: external merge  Disk: 7504kB
+  ->  Seq Scan on transactions  (actual rows=200000)
+Execution Time: 135.158 ms
+```
+**Say:**
+- "With `limit 10`, Postgres only keeps the 10 smallest seen so far: a top-N heapsort in 26 kB. It never sorts all 200,000."
+- "Without a limit, it must sort everything. With only 256 kB of `work_mem`, the sort didn't fit and spilled 7.5 MB to disk: `external merge`. Disk is much slower than memory."
+- "Fixes: return fewer rows, raise `work_mem` for this query, or add an index on `amount` so rows come out already sorted."
+
+#### Step 8. Stale statistics
+```text
+-- before analyze
+Bitmap Heap Scan on transactions  (cost=4.71..191.23 rows=53 width=28) (actual rows=66692)
+
+-- after analyze
+Bitmap Heap Scan on transactions  (cost=820.93..3608.77 rows=66147 width=28) (actual rows=66692)
+```
+**Say:** "Before `analyze`, Postgres still thinks user 7 has about 53 rows, but there are 66,692: off by more than 1,000 times. Its statistics describe the table as it was before the update. After `analyze` the guess is 66,147, close to the truth."
+
+"Here the plan type happened to stay the same. But every choice in a plan is built on these guesses: whether to use an index, which join type, which table to hash, how much memory to plan for. In a bigger query, a 1,000-times miss is how you get a Nested Loop running 66,000 times when a Hash Join was right."
+
+**How to spot it in any plan:** compare `rows=` in the first brackets with `rows=` in the second. A gap of 10 times or more at any step points to stale statistics, or to a condition the planner can't estimate (like the function in Step 4). Fix: `analyze table_name`. Autovacuum normally does this for you; it was off here on purpose.
+
+#### Interview version
+
+If you're shown a plan and asked to explain it, say it in this order:
+1. "Reading from the most indented line up, the first step is ___ on ___."
+2. "It expected ___ rows and got ___." (A big gap means statistics.)
+3. "The most time goes to ___." (Compare `actual time` between steps.)
+4. "It's slow because ___." (A Seq Scan with many rows removed, a function on the column, a spill to disk, a nested loop with many loops.)
+5. "I'd fix it with ___, then rerun `explain analyze` to confirm."
+
+**Follow-ups:**
+- *"Does `explain analyze` run the query?"* "Yes. For an `update` or `delete` it really changes data, so I'd wrap it in `begin; ... rollback;`."
+- *"Why might a query be fast in dev and slow in production?"* "Different data sizes and statistics lead to different plans. A Nested Loop over 100 dev rows becomes one over a million rows."
+- *"How do you see whether data came from memory or disk?"* "`explain (analyze, buffers)`: `shared hit` is from memory, `read` is from disk."
+- *"Can you force Postgres to use an index?"* "Not directly. For testing I can `set enable_seqscan = off` to see the alternative plan's cost, but the real fix is better statistics, a better index or a rewritten query."
+
 ---
 
 ## Part 6: Mock round

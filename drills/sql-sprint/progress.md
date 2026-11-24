@@ -32,6 +32,7 @@ One row per drill. Edit in GitHub (pencil icon) and commit.
 | D1 | table design, keys | 15 | | | | |
 | O1 | index and EXPLAIN | 12 | | | | |
 | O2 | "it got slow" talk track | 5 | | | | |
+| O3 | EXPLAIN lab | 25 | | | | |
 | M1 | mock round, 5 parts | 40 | | | | |
 | QF | 30 quick-fire questions | 15 | | | | |
 

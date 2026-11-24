@@ -694,6 +694,151 @@ where user_id = 42
 
 **Check yourself:** your answer has a clear order and ends with "measure again".
 
+### O3. EXPLAIN lab: watch the plan change (25 min)
+**What this tests:** reading a query plan, and knowing **why** Postgres picks each plan. After this, O1 and O2 should feel obvious.
+
+**Interviewer says:** "Here's the plan for your query. Walk me through it. Why didn't it use the index?"
+
+**How to read a plan** (keep this open while you work)
+
+A plan is a tree. The most indented line runs **first** and passes its rows up to the line above. Each line looks like this:
+```text
+Seq Scan on transactions  (cost=0.00..3971.00 rows=40 width=28) (actual time=0.014..10.962 rows=40 loops=1)
+  Filter: (user_id = 42)
+  Rows Removed by Filter: 199960
+```
+
+| Part | Meaning |
+|---|---|
+| `Seq Scan on transactions` | the step: read every row of the table |
+| `cost=0.00..3971.00` | the planner's guess of work: to the first row .. to the last row. A unit, not milliseconds. Only compare costs within one plan |
+| `rows=40` (first brackets) | how many rows the planner **expects** |
+| `actual time=0.014..10.962` | real milliseconds: to the first row .. to the last row. Only with `explain analyze` |
+| `rows=40` (second brackets) | how many rows **really** came out |
+| `loops=1` | how many times the step ran. Time and rows are per loop |
+| `Rows Removed by Filter` | rows read and thrown away: wasted work |
+
+`explain` shows the guess without running the query. `explain analyze` runs it and shows the truth.
+
+| Step you'll see | What it does | Fast when |
+|---|---|---|
+| Seq Scan | reads the whole table | you need a big share of the rows |
+| Index Scan | walks the index, then fetches each row | you need a few rows |
+| Bitmap Index Scan + Bitmap Heap Scan | collects matching row locations from the index, then reads those table pages in order | you need a few hundred to a few thousand rows |
+| Index Only Scan | answers from the index alone, never touches the table | every column you need is in the index |
+| Hash Join | builds a hash table from the smaller side, then streams the bigger side through it | joining large sets |
+| Nested Loop | for each row on the outside, looks up matches on the inside | the outside has few rows and the inside has an index |
+| Sort | sorts rows. `external merge  Disk:` means it ran out of memory and spilled to disk | |
+
+**Setup** (200,000 transactions and 5,000 users; only the primary keys are indexed)
+```sql
+drop table if exists transactions; drop table if exists users;
+create table users (user_id int primary key, state text, signup_date date);
+create table transactions (txn_id int primary key, user_id int, created_at timestamp,
+                           amount numeric(10,2), status text)
+  with (autovacuum_enabled = false);   -- statistics change only when you run analyze
+insert into users
+select g, (array['NY','NJ','CT','PA'])[g % 4 + 1], date '2025-01-01' + g % 365
+from generate_series(1, 5000) as g;
+insert into transactions
+select g, g % 5000 + 1,
+       timestamp '2026-01-01' + (g % 120) * interval '1 day' + (g % 1440) * interval '1 minute',
+       -((g % 300) + 1), case when g % 10 = 0 then 'declined' else 'posted' end
+from generate_series(1, 200000) as g;
+analyze users; analyze transactions;
+set max_parallel_workers_per_gather = 0;   -- keeps plans simple; rerun it if you see "Gather" or "Parallel"
+```
+
+**Your task:** do the 8 steps in order. For each one, **write your prediction first** (which step type, roughly how many rows), then run it and answer the questions. Your times will differ from anyone else's; the step types and row counts won't.
+
+**Step 1. Guess vs truth.**
+```sql
+explain select * from transactions where user_id = 42;
+explain analyze select * from transactions where user_id = 42;
+```
+What step type is it? How many rows did it expect, and how many came out? How many rows did it read and throw away?
+
+**Step 2. Add an index.**
+```sql
+create index if not exists idx_txn_user on transactions (user_id);
+explain analyze select * from transactions where user_id = 42;
+explain analyze select * from transactions where txn_id = 500;
+```
+What replaced the Seq Scan, and how much faster is it? Why does the `txn_id` lookup use a different step type?
+
+**Step 3. An index Postgres ignores.**
+```sql
+create index if not exists idx_txn_status on transactions (status);
+explain analyze select * from transactions where status = 'posted';
+explain analyze select * from transactions where status = 'declined';
+```
+Same index, same column. Why does one use it and the other not?
+
+**Step 4. A function on the column.**
+```sql
+create index if not exists idx_txn_created on transactions (created_at);
+explain analyze select count(*) from transactions where date_trunc('day', created_at) = '2026-03-01';
+explain analyze select count(*) from transactions
+where created_at >= '2026-03-01' and created_at < '2026-03-02';
+```
+Both count the same rows. Why does only the second use `idx_txn_created`?
+
+**Step 5. Two filters, one index.**
+```sql
+explain analyze select count(*) from transactions
+where user_id = 42 and created_at >= '2026-03-01' and created_at < '2026-04-01';
+
+create index if not exists idx_txn_user_created on transactions (user_id, created_at);
+explain analyze select count(*) from transactions
+where user_id = 42 and created_at >= '2026-03-01' and created_at < '2026-04-01';
+
+vacuum analyze transactions;
+explain analyze select count(*) from transactions
+where user_id = 42 and created_at >= '2026-03-01' and created_at < '2026-04-01';
+```
+Compare the three plans. Where does the date filter run each time? What does `Heap Fetches: 0` mean, and why did it need `vacuum`?
+
+**Step 6. Two join types.**
+```sql
+explain analyze
+select u.state, sum(-t.amount) as spend
+from transactions t join users u on u.user_id = t.user_id
+group by u.state;
+
+explain analyze
+select u.state, t.amount
+from transactions t join users u on u.user_id = t.user_id
+where u.user_id = 42;
+```
+Which join type does each use? Which table is hashed in the first, and why that one?
+
+**Step 7. Sorting and memory.**
+```sql
+explain analyze select * from transactions order by amount limit 10;
+
+set work_mem = '256kB';
+explain analyze select * from transactions order by amount;
+reset work_mem;
+```
+Find `Sort Method` in each. Why doesn't the first need much memory? What happened in the second?
+
+**Step 8. Stale statistics.**
+```sql
+update transactions set user_id = 7 where txn_id % 3 = 0;   -- a third of the table now belongs to user 7
+explain analyze select * from transactions where user_id = 7;
+
+analyze transactions;
+explain analyze select * from transactions where user_id = 7;
+```
+Compare expected and actual rows before and after `analyze`. Why does a wrong guess matter, even when the plan looks fine?
+
+**Hints:**
+1. The planner picks the plan with the lowest **estimated** cost. Reading rows in table order is cheap; jumping around the table is expensive.
+2. An index stores the column's **values**. It can't find `date_trunc('day', created_at)`, because that value isn't stored.
+3. When expected and actual rows differ by 10 times or more, suspect the statistics before anything else.
+
+**Check yourself:** for each step you can say the step type, expected vs actual rows, and one sentence on why the planner chose it.
+
 ---
 
 ## Part 6: Mock round (40 min, out loud)
